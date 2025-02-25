@@ -54,44 +54,47 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
-      {/* Hero Section */}
-      <section className="py-20 text-center space-y-6">
+      {/* Hero Section - Improved responsiveness */}
+      <section className="px-4 py-12 md:py-20 text-center space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="space-y-4"
         >
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
+          <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
             Discover Your <span className="text-primary">Perfect Career</span>
           </h1>
-          <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+          <p className="mx-auto max-w-[700px] text-gray-500 text-sm md:text-base lg:text-lg xl:text-xl">
             Let AI analyze your profile and suggest the ideal career path tailored just for you
           </p>
         </motion.div>
 
-        <div className="flex justify-center gap-4">
-          <Badge variant="outline" className="text-sm py-2 px-4">
-            <Brain className="w-4 h-4 mr-2" />
+        {/* Badges - Stack on mobile */}
+        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
+          <Badge variant="outline" className="text-xs sm:text-sm py-2 px-4">
+            <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
             AI-Powered Analysis
           </Badge>
-          <Badge variant="outline" className="text-sm py-2 px-4">
-            <Briefcase className="w-4 h-4 mr-2" />
+          <Badge variant="outline" className="text-xs sm:text-sm py-2 px-4">
+            <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
             Personalized Suggestions
           </Badge>
-          <Badge variant="outline" className="text-sm py-2 px-4">
-            <GraduationCap className="w-4 h-4 mr-2" />
+          <Badge variant="outline" className="text-xs sm:text-sm py-2 px-4">
+            <GraduationCap className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
             Career Guidance
           </Badge>
         </div>
       </section>
 
-      {/* Main Form Section */}
-      <section className="container mx-auto px-4 py-10">
+      {/* Main Form Section - Improved padding and spacing */}
+      <section className="container mx-auto px-4 py-6 md:py-10">
         <Card className="max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle>Career Profile Analysis</CardTitle>
-            <CardDescription>Tell us about yourself to get personalized career suggestions</CardDescription>
+          <CardHeader className="space-y-2 text-center sm:text-left">
+            <CardTitle className="text-2xl sm:text-3xl">Career Profile Analysis</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
+              Tell us about yourself to get personalized career suggestions
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-8">
@@ -305,32 +308,32 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="grid gap-8 md:grid-cols-3">
-          <Card>
+      {/* Features Section - Improved grid responsiveness */}
+      <section className="container mx-auto px-4 py-12 md:py-20">
+        <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="flex flex-col h-full">
             <CardHeader>
-              <Brain className="h-8 w-8 text-primary" />
-              <CardTitle>AI-Powered Analysis</CardTitle>
-              <CardDescription>
+              <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <CardTitle className="text-lg sm:text-xl">AI-Powered Analysis</CardTitle>
+              <CardDescription className="text-sm">
                 Advanced algorithms analyze your profile to provide accurate career suggestions
               </CardDescription>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="flex flex-col h-full">
             <CardHeader>
-              <Briefcase className="h-8 w-8 text-primary" />
-              <CardTitle>Personalized Matches</CardTitle>
-              <CardDescription>
+              <Briefcase className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <CardTitle className="text-lg sm:text-xl">Personalized Matches</CardTitle>
+              <CardDescription className="text-sm">
                 Get career suggestions tailored to your unique combination of skills and interests
               </CardDescription>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="flex flex-col h-full">
             <CardHeader>
-              <GraduationCap className="h-8 w-8 text-primary" />
-              <CardTitle>Career Guidance</CardTitle>
-              <CardDescription>
+              <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <CardTitle className="text-lg sm:text-xl">Career Guidance</CardTitle>
+              <CardDescription className="text-sm">
                 Receive detailed insights and next steps to pursue your ideal career path
               </CardDescription>
             </CardHeader>

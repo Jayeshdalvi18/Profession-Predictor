@@ -94,9 +94,9 @@ const SignUp = () => {
         {/* Header section */}
         <div className="text-center">
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
-            Join Mystery Message
+            Join Profession Predictor
           </h1>
-          <p className="mb-4">Sign Up to Start your Anonymous Adventure</p>
+          <p className="mb-4">Sign Up to Start the Amamzing Journey</p>
         </div>
 
         {/* Sign up form */}

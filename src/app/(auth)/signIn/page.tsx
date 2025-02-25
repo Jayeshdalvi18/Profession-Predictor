@@ -81,9 +81,9 @@ const SignIn = () => {
         {/* Header section */}
         <div className="text-center">
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
-            Join Mystery Message
+            Join Profession Predictor
           </h1>
-          <p className="mb-4">Sign In to Start your Anonymous Adventure</p>
+          <p className="mb-4">Sign In to Start the Amazing Journey</p>
         </div>
 
         {/* Sign in form */}

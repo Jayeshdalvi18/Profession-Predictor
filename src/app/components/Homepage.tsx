@@ -141,8 +141,8 @@ export default function Home() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="high-school">High School</SelectItem>
-                        <SelectItem value="bachelors">Bachelor's Degree</SelectItem>
-                        <SelectItem value="masters">Master's Degree</SelectItem>
+                        <SelectItem value="bachelors">Bachelor&apos;s Degree</SelectItem>
+                        <SelectItem value="masters">Master&apos;s Degree</SelectItem>
                         <SelectItem value="phd">Ph.D.</SelectItem>
                       </SelectContent>
                     </Select>

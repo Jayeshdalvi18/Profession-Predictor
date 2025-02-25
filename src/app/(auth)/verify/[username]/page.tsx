@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import React from "react";
-import {useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,30 +70,30 @@ const VerifyAccount = () => {
               name="verifyCode"
               render={({ field }) => (
                 <FormItem>
-              <FormLabel>One-Time Password</FormLabel>
-              <FormControl>
-                <InputOTP maxLength={6} {...field}>
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    </InputOTPGroup>
-                    <InputOTPSeparator/> 
-                    <InputOTPGroup>
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    </InputOTPGroup>
-                    <InputOTPSeparator/>
-                    <InputOTPGroup>
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-              </FormControl>
-              <FormDescription>
-                Please enter the one-time password sent to your phone.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+                  <FormLabel>One-Time Password</FormLabel>
+                  <FormControl>
+                    <InputOTP maxLength={6} {...field}>
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </FormControl>
+                  <FormDescription>
+                    Please enter the one-time password sent to your phone.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
             />
             <Button type="submit">Submit</Button>

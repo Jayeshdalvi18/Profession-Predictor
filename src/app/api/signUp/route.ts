@@ -55,9 +55,7 @@ export async function POST(request: Request) {
                 password: hashedPassword,
                 verifyCode,
                 verifyCodeExpires: expiryDate,
-                isVerified: false,
-                isAcceptingMessages: true,
-                messages: []
+                isVerified: false
             })
             // Save the new user to the database
             await newUser.save();

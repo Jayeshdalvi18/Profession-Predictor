@@ -1,7 +1,5 @@
-import { Mail, Github, Linkedin, Twitter, Instagram, Youtube } from "lucide-react"
+import { Github, Linkedin, Twitter, Instagram } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 
 export default function Footer() {
   return (
@@ -16,25 +14,21 @@ export default function Footer() {
               Empowering your career decisions with AI-driven insights and personalized guidance.
             </p>
             <div className="flex space-x-4">
-              <Link className="text-muted-foreground hover:text-primary" href="#">
+              <Link className="text-muted-foreground hover:text-primary" href="https://github.com/0xshariq">
                 <Github className="h-5 w-5" />
                 <span className="sr-only">GitHub</span>
               </Link>
-              <Link className="text-muted-foreground hover:text-primary" href="#">
+              <Link className="text-muted-foreground hover:text-primary" href="https://x.com/Sharique_Ch">
                 <Twitter className="h-5 w-5" />
                 <span className="sr-only">Twitter</span>
               </Link>
-              <Link className="text-muted-foreground hover:text-primary" href="#">
+              <Link className="text-muted-foreground hover:text-primary" href="https://www.linkedin.com/in/0xshariq">
                 <Linkedin className="h-5 w-5" />
                 <span className="sr-only">LinkedIn</span>
               </Link>
-              <Link className="text-muted-foreground hover:text-primary" href="#">
+              <Link className="text-muted-foreground hover:text-primary" href="https://www.instagram.com/sharique1303/">
                 <Instagram className="h-5 w-5" />
                 <span className="sr-only">Instagram</span>
-              </Link>
-              <Link className="text-muted-foreground hover:text-primary" href="#">
-                <Youtube className="h-5 w-5" />
-                <span className="sr-only">YouTube</span>
               </Link>
             </div>
           </div>
@@ -46,55 +40,13 @@ export default function Footer() {
               <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/about">
                 About Us
               </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/careers">
-                Careers
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/contact">
+                Contact Us
               </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/blog">
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="https://portfolio-sigma-rose-22.vercel.app/blog">
                 Blog
               </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/testimonials">
-                Testimonials
-              </Link>
             </nav>
-          </div>
-
-          {/* Resources */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Resources</h3>
-            <nav className="flex flex-col space-y-2">
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/help">
-                Help Center
-              </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/guides">
-                Career Guides
-              </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/research">
-                Research Papers
-              </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/api">
-                API Documentation
-              </Link>
-            </nav>
-          </div>
-
-          {/* Newsletter */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Stay Updated</h3>
-            <p className="text-sm text-muted-foreground">
-              Subscribe to our newsletter for career insights and updates.
-            </p>
-            <div className="flex flex-col space-y-2">
-              <div className="flex space-x-2">
-                <Input type="email" placeholder="Enter your email" className="max-w-[220px]" />
-                <Button size="sm" variant="outline">
-                  <Mail className="h-4 w-4" />
-                  <span className="sr-only">Subscribe to newsletter</span>
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                By subscribing, you agree to our Privacy Policy and Terms of Service.
-              </p>
-            </div>
           </div>
         </div>
 
@@ -110,12 +62,6 @@ export default function Footer() {
               </Link>
               <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/terms">
                 Terms of Service
-              </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/cookies">
-                Cookie Policy
-              </Link>
-              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/sitemap">
-                Sitemap
               </Link>
             </nav>
           </div>

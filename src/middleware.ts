@@ -1,21 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-export { default } from "next-auth/middleware";
-import { getToken } from 'next-auth/jwt';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-// This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-    const token = await getToken({ req: request, secret: process.env.SECRET });
-    const url = request.nextUrl;
-    if (token && (url.pathname.startsWith('/signIn') || url.pathname.startsWith('/signUp') || url.pathname.startsWith('/verify') || (url.pathname === '/'))) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-    if(!token && (url.pathname.startsWith('/dashboard'))) {
-        return NextResponse.redirect(new URL('/signIn', request.url))
-    }
-    return NextResponse.next()
+  const token = await getToken({ req: request });
+  const { pathname } = request.nextUrl;
+
+  // If user is logged in as a guest, redirect to homepage
+  if (token && token.isGuest) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // Protect dashboard route - redirect to login if not authenticated
+  if (!token && pathname === "/") {
+    return NextResponse.redirect(new URL("/signIn", request.url));
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (token && (pathname === "/signIn" || pathname === "/signUp" || pathname.startsWith("/verify"))) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
-    matcher: ['/signIn', '/signUp', '/', '/dashboard/:path*', '/verify/:path*']
-}
+  matcher: ["/", "/signIn", "/signUp", "/verify/:path*"],
+};

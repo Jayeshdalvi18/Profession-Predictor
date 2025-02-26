@@ -1,5 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
 import { dbConnect, dbDisconnect } from "@/lib/dbConnect";
 import UserModel from "@/models/User.models";
@@ -42,7 +44,15 @@ export const authOptions: NextAuthOptions = {
                     await dbDisconnect();
                 }
             }
-        })
+        }),
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        }),
+        GitHubProvider({
+            clientId: process.env.GITHUB_ID!,
+            clientSecret: process.env.GITHUB_SECRET!,
+        }),
     ],
     // Custom sign-in page
     pages: {

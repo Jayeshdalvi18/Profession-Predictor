@@ -11,9 +11,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url))
   }
 
-   // If user is logged in (including via Google or GitHub), redirect to homepage
-   if (token) {
+  // If user is logged in (including via Google or GitHub), redirect to homepage
+  if (token) {
     if (pathname === "/signIn" || pathname === "/signUp" || pathname.startsWith("/verify")) {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+    // Additional check for Google or GitHub login
+    if (token.provider === "google" || token.provider === "github") {
       return NextResponse.redirect(new URL("/", request.url))
     }
   }
@@ -29,4 +33,3 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/", "/signIn", "/signUp", "/verify/:path*"],
 }
-

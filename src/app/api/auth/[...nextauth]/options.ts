@@ -23,8 +23,7 @@ export const authOptions: NextAuthOptions = {
                     // Find user by email or username
                     const user = await UserModel.findOne({
                         $or: [
-                            { email: credentials.email },
-                            { username: credentials.email }
+                            { email: credentials.email }
                         ]
                     })
                     if (!user) throw new Error("User not found");
@@ -50,8 +49,8 @@ export const authOptions: NextAuthOptions = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         }),
         GitHubProvider({
-            clientId: process.env.GITHUB_ID!,
-            clientSecret: process.env.GITHUB_SECRET!,
+            clientId: process.env.GITHUB_CLIENT_ID!,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         }),
     ],
     // Custom sign-in page
@@ -82,7 +81,31 @@ export const authOptions: NextAuthOptions = {
                 token.username = user.username
             }
             return token
-        }
+        },
+        async signIn({ account, profile }) {
+            if (account?.provider === "google" || account?.provider === "github") {
+                await dbConnect()
+                try {
+                    const user = await UserModel.findOne({ email: profile?.email })
+                    if (!user) {
+                        // Create a new user if they don't exist
+                        await UserModel.create({
+                            email: profile?.email,
+                            username: profile?.name?.replace(/\s+/g, "").toLowerCase(),
+                            isVerified: true, // Automatically verify users from OAuth providers
+                            // You might want to generate a random password here
+                        })
+                    }
+                    return true
+                } catch (error) {
+                    console.error("Error during OAuth sign in:", error)
+                    return false
+                } finally {
+                    await dbDisconnect()
+                }
+            }
+            return true
+        },
     }
 }
 

@@ -17,7 +17,10 @@ interface VerificationEmailProps {
   otp: string;
 }
 const baseUrl = process.env.BASE_URL || "http://localhost:3000";
-export const VerificationEmail = ({
+
+
+
+const VerificationEmail = ({
   username,
   email,
   otp,
@@ -31,7 +34,8 @@ export const VerificationEmail = ({
 
         <Text style={text}>
           Hello <strong>{username}</strong>, <br />
-          Thank you for signing up! Please verify your account using the details below:
+          Thank you for signing up! Please verify your account using the details
+          below:
         </Text>
 
         <Section style={infoContainer}>
@@ -45,8 +49,8 @@ export const VerificationEmail = ({
         </Section>
 
         <Text style={text}>
-          This OTP is valid for <strong>10 minutes</strong>. Enter it on the verification page
-          to complete your registration.
+          This OTP is valid for <strong>10 minutes</strong>. Enter it on the
+          verification page to complete your registration.
         </Text>
 
         <Section style={buttonContainer}>
@@ -56,7 +60,8 @@ export const VerificationEmail = ({
         </Section>
 
         <Text style={text}>
-          If you didn&apos;t request this email, please ignore it or contact our support team.
+          If you didn&apos;t request this email, please ignore it or contact our
+          support team.
         </Text>
 
         <Text style={footer}>

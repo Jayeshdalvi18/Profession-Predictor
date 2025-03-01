@@ -125,31 +125,6 @@ export default function Home() {
 
   const prevStep = () => setStep(step - 1)
 
-  const handleSignIn = async () => {
-    try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        callbackUrl: "/",
-      })
-      if (result?.error) {
-        toast({
-          title: "Sign In Failed",
-          description: result.error,
-          variant: "destructive",
-        })
-      } else if (result?.url) {
-        router.push(result.url)
-      }
-    } catch (error) {
-      console.error("Sign in error:", error)
-      toast({
-        title: "Sign In Failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
       {/* Hero Section */}
@@ -510,13 +485,6 @@ export default function Home() {
           </Card>
         </div>
       </section>
-
-      {/* Sign In Button */}
-      {status === "unauthenticated" && (
-        <div className="fixed bottom-4 right-4">
-          <Button onClick={handleSignIn}>Sign In</Button>
-        </div>
-      )}
     </div>
   )
 }

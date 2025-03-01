@@ -1,4 +1,5 @@
-import { OpenAI } from "openai"
+import OpenAI from "openai"
+import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { nanoid } from "nanoid"
 import { dbConnect } from "@/lib/dbConnect"
@@ -10,45 +11,9 @@ const openai = new OpenAI({
 
 const MAX_GUEST_PREDICTIONS = 3
 
-const prompt = `As a career counselor AI, analyze the following profile to:
-1. Estimate an IQ range based on the complexity of interests, skills, and education level
-2. Suggest 3 most suitable professions that align with the profile
-3. Provide detailed analysis for each suggestion including:
-   - Skills match percentage
-   - Growth potential
-   - Work-life balance
-   - Required additional skills or certifications
-
-Consider the following profile:
-Hobbies: {hobbies}
-Skills: {skills}
-Education: {education}
-Work Style Preference: {workStyle}
-Areas of Interest: {interests}
-
-Consider factors like:
-- Analytical vs creative tendencies
-- Technical vs social interests
-- Leadership potential
-- Problem-solving abilities
-- Attention to detail
-- Work style preferences
-- Educational background
-- Industry trends and future prospects
-
-Provide a structured response with:
-1. Estimated IQ range
-2. Top 3 profession recommendations
-3. Detailed analysis for each profession including match percentage and specific reasons for the recommendation`
-
 export async function POST(req: Request) {
   try {
-    const { hobbies, skills, education, workStyle, interests } = await req.json()
-
-    // Validate input
-    if (!hobbies || !skills || !education || !workStyle || !interests) {
-      return Response.json({ error: "All fields are required" }, { status: 400 })
-    }
+    const { hobbies, skills, education, workStyle, interests, languages, certifications, experience } = await req.json()
 
     // Check guest user prediction limit
     const cookieStore = await cookies()
@@ -59,7 +24,7 @@ export async function POST(req: Request) {
       const guest = await GuestModel.findOne({ guestId })
 
       if (guest && guest.predictionsCount >= MAX_GUEST_PREDICTIONS) {
-        return Response.json(
+        return NextResponse.json(
           {
             error: "Guest prediction limit reached. Please sign up for unlimited predictions.",
             limitReached: true,
@@ -75,25 +40,43 @@ export async function POST(req: Request) {
       }
     }
 
+    const prompt = `As a career counselor AI, analyze the following detailed profile to:
+1. Estimate an IQ range based on the complexity of interests, skills, and education level
+2. Suggest 3 most suitable professions that align with the profile
+3. Provide detailed analysis for each suggestion including:
+   - Skills match percentage
+   - Growth potential
+   - Work-life balance
+   - Required additional skills or certifications
+   - Salary range
+   - Career progression path
+
+Consider the following comprehensive profile:
+Hobbies: ${hobbies}
+Skills: ${skills}
+Education: ${education}
+Work Style Preference: ${workStyle}
+Areas of Interest: ${interests}
+Languages: ${languages || "Not specified"}
+Certifications: ${certifications || "Not specified"}
+Experience Level: ${experience || "Not specified"}
+
+Provide a structured response with:
+1. Estimated IQ range with explanation
+2. Top 3 profession recommendations with detailed rationale
+3. Comprehensive analysis for each profession including all the points mentioned above`
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4-turbo",
       messages: [
         {
           role: "system",
           content: "You are a career counseling AI that provides detailed career analysis and recommendations.",
         },
-        {
-          role: "user",
-          content: prompt
-            .replace("{hobbies}", hobbies)
-            .replace("{skills}", skills)
-            .replace("{education}", education)
-            .replace("{workStyle}", workStyle)
-            .replace("{interests}", interests),
-        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 2000,
     })
 
     const content = response.choices[0].message.content
@@ -136,42 +119,47 @@ export async function POST(req: Request) {
     }
 
     // Store result for guest users
-    let guestIdCookie = cookieStore.get("guestId")?.value
+    if (guestId) {
+      let guestIdCookie = cookieStore.get("guestId")?.value
 
-    if (!guestIdCookie) {
-      guestIdCookie = nanoid()
-      cookieStore.set("guestId", guestIdCookie, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      })
+      if (!guestIdCookie) {
+        guestIdCookie = nanoid()
+        cookieStore.set("guestId", guestIdCookie, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        })
+      }
+
+      await dbConnect()
+      await GuestModel.findOneAndUpdate(
+        { guestId: guestIdCookie },
+        {
+          $push: {
+            predictions: {
+              hobbies,
+              skills,
+              education,
+              workStyle,
+              interests,
+              languages,
+              certifications,
+              experience,
+              result,
+            },
+          },
+          $setOnInsert: { guestId: guestIdCookie },
+          $set: { lastActive: new Date() },
+        },
+        { upsert: true, new: true },
+      )
     }
 
-    await dbConnect()
-    await GuestModel.findOneAndUpdate(
-      { guestId: guestIdCookie },
-      {
-        $push: {
-          predictions: {
-            hobbies,
-            skills,
-            education,
-            workStyle,
-            interests,
-            result,
-          },
-        },
-        $setOnInsert: { guestId: guestIdCookie },
-        $set: { lastActive: new Date() },
-      },
-      { upsert: true, new: true },
-    )
-
-    return Response.json(result)
+    return NextResponse.json(result)
   } catch (error) {
     console.error("API Error:", error)
-    return Response.json({ error: "Failed to process request" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 })
   }
 }
 

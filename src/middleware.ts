@@ -6,30 +6,33 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request })
   const { pathname } = request.nextUrl
 
-  // If user is logged in as a guest, redirect to homepage
-  if (token && token.isGuest) {
-    return NextResponse.redirect(new URL("/", request.url))
-  }
-
-  // If user is logged in (including via Google or GitHub), redirect to homepage
+  // Check if user is already logged in
   if (token) {
-    if (pathname === "/signIn" || pathname === "/signUp" || pathname.startsWith("/verify")) {
+    const isGuest = token.isGuest
+    const isOAuthUser = token.provider === "google" || token.provider === "github"
+    const isNormalUser = !isGuest && !isOAuthUser
+
+    // Prevent multiple logins
+    if (pathname === "/signIn" || pathname === "/signUp") {
+      if (isGuest || isOAuthUser || isNormalUser) {
+        return NextResponse.redirect(new URL("/", request.url))
+      }
+    }
+
+    // Ensure guests cannot log in again
+    if (isGuest && (pathname === "/signIn" || pathname === "/signUp")) {
       return NextResponse.redirect(new URL("/", request.url))
     }
-    // Additional check for Google or GitHub login
-    if (token.provider === "google" || token.provider === "github") {
+
+    // Ensure authenticated users (OAuth/Normal) cannot use Guest Login
+    if (!isGuest && pathname === "/guest") {
       return NextResponse.redirect(new URL("/", request.url))
     }
   }
 
-  // If user is not logged in, protect the home route
-  if (!token && pathname === "/") {
-    return NextResponse.redirect(new URL("/signIn", request.url))
-  }
-
-  return NextResponse.next()
+  return NextResponse.next() // Allow request if none of the conditions matched
 }
 
 export const config = {
-  matcher: ["/", "/signIn", "/signUp", "/verify/:path*"],
+  matcher: ["/", "/signIn", "/signUp", "/verify/:path*", "/guest"]
 }

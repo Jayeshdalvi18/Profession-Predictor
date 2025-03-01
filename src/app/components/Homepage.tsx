@@ -1,10 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle } from "lucide-react"
+import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,18 +14,26 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 
 export default function Home() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+  const { status } = useSession()
+  const router = useRouter()
   const [formData, setFormData] = useState({
     hobbies: "",
     skills: "",
     education: "",
     interests: "",
     workStyle: "",
+    languages: "",
+    certifications: "",
+    experience: "",
   })
   const [result, setResult] = useState<{
     iq: number
@@ -48,7 +55,7 @@ export default function Home() {
       if (!formData.education || !formData.workStyle || !formData.interests.trim()) {
         toast({
           title: "Missing Information",
-          description: "Please fill in all fields before proceeding",
+          description: "Please fill in all required fields before proceeding",
           variant: "destructive",
         })
         return false
@@ -67,17 +74,28 @@ export default function Home() {
     try {
       const response = await fetch("/api/suggestProfession", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Failed to get career suggestions")
+        const errorData = await response.json()
+        if (errorData.limitReached) {
+          toast({
+            title: "Prediction Limit Reached",
+            description: "You've reached the guest prediction limit. Please sign up for unlimited predictions.",
+            variant: "destructive",
+          })
+          router.push("/signUp")
+          return
+        }
+        throw new Error(errorData.error || "Failed to get career suggestions")
       }
 
       const data = await response.json()
-      if (!data.professions || !data.details) {
+      if (!data.iq || !data.professions || !data.details) {
         throw new Error("Invalid response format")
       }
 
@@ -107,9 +125,34 @@ export default function Home() {
 
   const prevStep = () => setStep(step - 1)
 
+  const handleSignIn = async () => {
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        callbackUrl: "/",
+      })
+      if (result?.error) {
+        toast({
+          title: "Sign In Failed",
+          description: result.error,
+          variant: "destructive",
+        })
+      } else if (result?.url) {
+        router.push(result.url)
+      }
+    } catch (error) {
+      console.error("Sign in error:", error)
+      toast({
+        title: "Sign In Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
-      {/* Hero Section - Improved responsiveness */}
+      {/* Hero Section */}
       <section className="px-4 py-12 md:py-20 text-center space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -142,7 +185,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Main Form Section - Improved padding and spacing */}
+      {/* Main Form Section */}
       <section className="container mx-auto px-4 py-6 md:py-10">
         <Card className="max-w-4xl mx-auto">
           <CardHeader className="space-y-2 text-center sm:text-left">
@@ -150,6 +193,15 @@ export default function Home() {
             <CardDescription className="text-sm sm:text-base">
               Tell us about yourself to get personalized career suggestions
             </CardDescription>
+            {status === "unauthenticated" && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Guest User</AlertTitle>
+                <AlertDescription>
+                  You are using the app as a guest. You have a limit of 3 predictions. Sign up for unlimited access!
+                </AlertDescription>
+              </Alert>
+            )}
           </CardHeader>
           <CardContent>
             <div className="mb-8">
@@ -184,6 +236,15 @@ export default function Home() {
                       onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                     />
                   </div>
+                  <div className="space-y-4">
+                    <Label>Languages Known</Label>
+                    <Textarea
+                      placeholder="E.g., English (Native), Spanish (Intermediate)..."
+                      className="min-h-[100px]"
+                      value={formData.languages}
+                      onChange={(e) => setFormData({ ...formData, languages: e.target.value })}
+                    />
+                  </div>
                   <div className="flex justify-end">
                     <Button onClick={nextStep}>Next Step</Button>
                   </div>
@@ -203,9 +264,12 @@ export default function Home() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="high-school">High School</SelectItem>
+                        <SelectItem value="associate">Associate&apos;s Degree</SelectItem>
                         <SelectItem value="bachelors">Bachelor&apos;s Degree</SelectItem>
                         <SelectItem value="masters">Master&apos;s Degree</SelectItem>
                         <SelectItem value="phd">Ph.D.</SelectItem>
+                        <SelectItem value="certification">Professional Certification</SelectItem>
+                        <SelectItem value="self-taught">Self-Taught</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -223,9 +287,43 @@ export default function Home() {
                         <SelectItem value="remote">Remote Work</SelectItem>
                         <SelectItem value="office">Office Based</SelectItem>
                         <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="flexible">Flexible</SelectItem>
+                        <SelectItem value="flexible">Flexible Hours</SelectItem>
+                        <SelectItem value="shift">Shift Work</SelectItem>
+                        <SelectItem value="travel">Travel Required</SelectItem>
+                        <SelectItem value="freelance">Freelance/Contract</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label>Experience Level</Label>
+                    <Select
+                      value={formData.experience}
+                      onValueChange={(value) => setFormData({ ...formData, experience: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your experience level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="entry">Entry Level</SelectItem>
+                        <SelectItem value="junior">Junior (1-3 years)</SelectItem>
+                        <SelectItem value="mid">Mid-Level (3-5 years)</SelectItem>
+                        <SelectItem value="senior">Senior (5+ years)</SelectItem>
+                        <SelectItem value="lead">Lead/Manager</SelectItem>
+                        <SelectItem value="executive">Executive</SelectItem>
+                        <SelectItem value="student">Student/Intern</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label>Professional Certifications</Label>
+                    <Textarea
+                      placeholder="List any professional certifications you have..."
+                      className="min-h-[100px]"
+                      value={formData.certifications}
+                      onChange={(e) => setFormData({ ...formData, certifications: e.target.value })}
+                    />
                   </div>
 
                   <div className="space-y-4">
@@ -258,6 +356,16 @@ export default function Home() {
 
               {step === 3 && result && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Disclaimer</AlertTitle>
+                    <AlertDescription>
+                      The career suggestions provided are based on the information you&apos;ve entered and should be used as
+                      a starting point for further exploration. These results are not definitive and may not account for
+                      all factors that influence career choices.
+                    </AlertDescription>
+                  </Alert>
+
                   <Tabs defaultValue="overview" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -370,7 +478,7 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Features Section - Improved grid responsiveness */}
+      {/* Features Section */}
       <section className="container mx-auto px-4 py-12 md:py-20">
         <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
           <Card className="flex flex-col h-full">
@@ -402,6 +510,13 @@ export default function Home() {
           </Card>
         </div>
       </section>
+
+      {/* Sign In Button */}
+      {status === "unauthenticated" && (
+        <div className="fixed bottom-4 right-4">
+          <Button onClick={handleSignIn}>Sign In</Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -7,9 +7,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 🔹 Redirect to /signIn if the user is NOT authenticated (Security Measure)
-  if (!token && pathname !== "/signIn") {
-    return NextResponse.redirect(new URL("/signIn", request.url))
-  }
+  // if (!token && pathname !== "/signIn") {
+  //   return NextResponse.redirect(new URL("/signIn", request.url))
+  // }
 
   // 🔹 Check if user is already logged in
   if (token) {

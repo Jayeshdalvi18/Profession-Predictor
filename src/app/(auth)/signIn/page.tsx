@@ -42,8 +42,8 @@ const SignIn = () => {
           description: result.error === "CredentialsSignin" ? "Invalid email or password." : result.error,
           variant: "destructive",
         })
-      } else if (result?.url) {
-        router.push(result.url)
+      } else {
+        router.push("/")
       }
     } catch (error) {
       toast({ title: "Sign In Failed", description: String(error), variant: "destructive" })

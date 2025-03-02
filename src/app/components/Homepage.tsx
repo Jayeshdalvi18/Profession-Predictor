@@ -16,7 +16,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
 
 export default function Home() {
   const [step, setStep] = useState(1)
@@ -168,6 +167,15 @@ export default function Home() {
             <CardDescription className="text-sm sm:text-base">
               Tell us about yourself to get personalized career suggestions
             </CardDescription>
+            {status === "unauthenticated" && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Guest User</AlertTitle>
+                <AlertDescription>
+                  You are using the app as a guest. You have a limit of 3 predictions. Sign up for unlimited access!
+                </AlertDescription>
+              </Alert>
+            )}
           </CardHeader>
           <CardContent>
             <div className="mb-8">

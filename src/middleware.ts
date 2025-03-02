@@ -17,19 +17,19 @@ export async function middleware(request: NextRequest) {
     const isOAuthUser = token.provider === "google" || token.provider === "github"
     const isNormalUser = !isGuest && !isOAuthUser
 
-    // 🔹 Prevent multiple logins
-    if (["/signIn", "/signUp"].includes(pathname)) {
+    // Prevent multiple logins
+    if (pathname === "/signIn" || pathname === "/signUp") {
       if (isGuest || isOAuthUser || isNormalUser) {
         return NextResponse.redirect(new URL("/", request.url))
       }
     }
 
-    // 🔹 Ensure guests cannot log in again without logging out
-    if (isGuest && ["/signIn", "/signUp"].includes(pathname)) {
+    // Ensure guests cannot log in again
+    if (isGuest && (pathname === "/signIn" || pathname === "/signUp")) {
       return NextResponse.redirect(new URL("/", request.url))
     }
 
-    // 🔹 Ensure authenticated users (OAuth/Normal) cannot use Guest Login
+    // Ensure authenticated users (OAuth/Normal) cannot use Guest Login
     if (!isGuest && pathname === "/guest") {
       return NextResponse.redirect(new URL("/", request.url))
     }

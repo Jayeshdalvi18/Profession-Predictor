@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,11 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { GuestAlert } from "@/components/guest-alert"
 
 export default function Home() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [predictionsCount, setPredictionsCount] = useState(0)
   const { toast } = useToast()
   const { status } = useSession()
   const router = useRouter()
@@ -39,6 +42,24 @@ export default function Home() {
     professions: string[]
     details: { title: string; match: number; description: string }[]
   } | null>(null)
+
+  // Fetch guest predictions count on component mount
+  useEffect(() => {
+    const fetchPredictionsCount = async () => {
+      if (status === "unauthenticated") {
+        try {
+          const response = await fetch("/api/predictions-count")
+          if (response.ok) {
+            const data = await response.json()
+            setPredictionsCount(data.count)
+          }
+        } catch (error) {
+          console.error("Error fetching predictions count:", error)
+        }
+      }
+    }
+    fetchPredictionsCount()
+  }, [status])
 
   const validateForm = () => {
     if (step === 1) {
@@ -100,6 +121,12 @@ export default function Home() {
 
       setResult(data)
       setStep(3)
+
+      // Update predictions count for guest users
+      if (status === "unauthenticated") {
+        setPredictionsCount((prev) => prev + 1)
+      }
+
       toast({
         title: "Analysis Complete",
         description: "Your career suggestions are ready!",
@@ -167,15 +194,7 @@ export default function Home() {
             <CardDescription className="text-sm sm:text-base">
               Tell us about yourself to get personalized career suggestions
             </CardDescription>
-            {status === "unauthenticated" && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Guest User</AlertTitle>
-                <AlertDescription>
-                  You are using the app as a guest. You have a limit of 3 predictions. Sign up for unlimited access!
-                </AlertDescription>
-              </Alert>
-            )}
+            {status === "unauthenticated" && <GuestAlert predictionsCount={predictionsCount} maxPredictions={3} />}
           </CardHeader>
           <CardContent>
             <div className="mb-8">

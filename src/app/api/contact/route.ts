@@ -1,35 +1,42 @@
-import type { NextApiRequest, NextApiResponse } from "next"
-import { Resend } from "resend"
+import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).end() // Method Not Allowed
-  }
-
+export async function POST(req: Request) {
   try {
-    const { email, name, message } = req.body
+    const { name, email, message } = await req.json();
 
-    if (!email || !name || !message) {
-      return res.status(400).json({ error: "Missing required fields" })
+    if (!name || !email || !message) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const { data } = await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: "your_email@example.com",
-      subject: `New message from ${name}`,
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: process.env.EMAIL_CLIENT_ID,
+        clientSecret: process.env.EMAIL_CLIENT_SECRET,
+        refreshToken: process.env.EMAIL_REFRESH_TOKEN,
+      },
+    });
+
+    const mailOptions = {
+      from: `"${name}" <${process.env.EMAIL_USER}>`, // From YOUR email
+      to: process.env.EMAIL_FROM, // Your email where you receive messages
+      replyTo: email, // User's email (so you can reply directly)
+      subject: `New Contact Form Submission from ${name}`,
       html: `
         <h1>New message from ${name}</h1>
-        <p>Email: ${email}</p>
-        <p>Message: ${message}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong> ${message}</p>
       `,
-    })
+    };
 
-    return res.status(200).json({ message: "Email sent successfully", data })
+    await transporter.sendMail(mailOptions);
+
+    return NextResponse.json({ message: "Email sent successfully" }, { status: 200 });
   } catch (error) {
-    console.error("Error sending email:", error)
-    return res.status(500).json({ error: "Failed to send email" })
+    console.error("Error sending email:", error);
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
 }
-

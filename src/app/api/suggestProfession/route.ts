@@ -1,26 +1,25 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { nanoid } from "nanoid";
-import { dbConnect } from "@/lib/dbConnect";
-import GuestModel from "@/models/Guest.models";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
+import { nanoid } from "nanoid"
+import { dbConnect } from "@/lib/dbConnect"
+import GuestModel from "@/models/Guest.models"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
-const MAX_GUEST_PREDICTIONS = 3;
+const MAX_GUEST_PREDICTIONS = 3
 
 export async function POST(req: Request) {
   try {
-    const { hobbies, skills, education, workStyle, interests, languages, certifications, experience } =
-      await req.json();
+    const { hobbies, skills, education, workStyle, interests, languages, certifications, experience } = await req.json()
 
     // Check guest user prediction limit
-    const cookieStore = await cookies();
-    const guestId = cookieStore.get("guestId")?.value;
+    const cookieStore = await cookies()
+    const guestId = cookieStore.get("guestId")?.value
 
     if (guestId) {
-      await dbConnect();
-      const guest = await GuestModel.findOne({ guestId });
+      await dbConnect()
+      const guest = await GuestModel.findOne({ guestId })
 
       if (guest && guest.predictionsCount >= MAX_GUEST_PREDICTIONS) {
         return NextResponse.json(
@@ -28,29 +27,28 @@ export async function POST(req: Request) {
             error: "Guest prediction limit reached. Please sign up for unlimited predictions.",
             limitReached: true,
           },
-          { status: 403 }
-        );
+          { status: 403 },
+        )
       }
 
       // Increment prediction count
       if (guest) {
-        guest.predictionsCount += 1;
-        await guest.save();
+        guest.predictionsCount += 1
+        await guest.save()
       }
     }
 
-    const prompt = `As a career counselor AI, analyze the following profile:
-1. Estimate an IQ range based on interests, skills, and education level.
-2. Suggest the 3 most suitable professions.
-3. Provide a detailed analysis for each, including:
-   - Skills match percentage
-   - Growth potential
-   - Work-life balance
-   - Additional skills needed
-   - Salary range
-   - Career progression
+    const prompt = `As a career counselor AI, analyze the following profile to provide comprehensive and detailed career guidance:
 
-Profile:
+IMPORTANT REQUIREMENTS:
+- You MUST suggest EXACTLY 3 unique and distinct career paths that are well-suited to the profile
+- Each career suggestion must be detailed and specific (not general categories)
+- Each career must have a unique match percentage between 70-98%
+- Provide comprehensive analysis for each career with specific details
+- For the "Next Steps" section, provide 3 UNIQUE and SPECIFIC action items for each career path
+- Ensure all information is tailored to the individual's profile
+
+Profile Details:
 - Hobbies: ${hobbies}
 - Skills: ${skills}
 - Education: ${education}
@@ -60,70 +58,139 @@ Profile:
 - Certifications: ${certifications || "Not specified"}
 - Experience: ${experience || "Not specified"}
 
-Return a structured response with:
-1. Estimated IQ range with reasoning.
-2. Top 3 recommended professions.
-3. Analysis for each profession.`
+Your response MUST follow this exact structure:
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+1. IQ ESTIMATE:
+   Provide an estimated IQ range (a specific number between 100-140) with a brief explanation based on the complexity of their skills, interests, and education.
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+2. CAREER RECOMMENDATIONS:
+   List exactly 3 specific career paths that match their profile. Each must be unique and distinct.
+
+3. DETAILED ANALYSIS:
+   For each career, provide:
+   - Title: [Specific job title]
+   - Match: [Percentage between 70-98%]
+   - Skills Alignment: Which of their skills directly apply to this career
+   - Growth Potential: Industry growth trends and advancement opportunities
+   - Work-Life Balance: How this career aligns with their preferred work style
+   - Required Skills: Specific skills they should develop
+   - Salary Range: Realistic compensation expectations
+   - Career Progression: Clear advancement path over 5-10 years
+
+4. NEXT STEPS:
+   For each career, provide 3 UNIQUE and SPECIFIC action items they should take to pursue this path, such as:
+   - Specific courses or certifications to obtain
+   - Industry-specific networking opportunities
+   - Particular projects to build their portfolio
+   - Specific companies to target for employment
+   - Mentorship or shadowing opportunities in the field
+
+Remember: Your response MUST include exactly 3 unique career recommendations with detailed analysis and specific next steps for each.`
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+
+    const result = await model.generateContent(prompt)
+    const response = result.response
+    const text = response.text()
 
     if (!text) {
-      throw new Error("Failed to get response from AI");
+      throw new Error("Failed to get response from AI")
     }
 
     // Extract IQ estimate
-    const iqMatch = text.match(/IQ.*?(\d+)/);
-    const iq = iqMatch ? Number.parseInt(iqMatch[1]) : 100;
+    const iqMatch = text.match(/IQ.*?(\d+)/)
+    const iq = iqMatch ? Number.parseInt(iqMatch[1]) : 100
 
     // Extract professions
-    const professionsMatch = text.match(/Professions?:([\s\S]*?)(?=\n\n|$)/);
+    const professionsMatch = text.match(/CAREER RECOMMENDATIONS:([\s\S]*?)(?=DETAILED ANALYSIS|$)/i)
     const professions = professionsMatch
       ? professionsMatch[1]
-          .split("\n")
+          .split(/\d+\.\s+/)
           .filter((p) => p.trim())
-          .map((p) => p.replace(/^\d+\.\s*/, "").trim())
-      : [];
+          .map((p) => p.replace(/^\s*-\s*/, "").trim())
+      : []
+
+    // Ensure we have at least 3 professions
+    if (professions.length < 3) {
+      // Add generic professions if needed
+      const genericProfessions = [
+        "Software Developer",
+        "Data Analyst",
+        "Project Manager",
+        "Marketing Specialist",
+        "Financial Advisor",
+      ]
+
+      while (professions.length < 3) {
+        const genericProfession = genericProfessions[professions.length % genericProfessions.length]
+        if (!professions.includes(genericProfession)) {
+          professions.push(genericProfession)
+        }
+      }
+    }
 
     // Extract detailed analysis
     const details = text
-      .split("\n\n")
+      .split(/\d+\.\s+Title:|Career \d+:|Profession \d+:/i)
       .filter((section) => section.includes("Match:"))
       .map((section) => {
-        const title = section.split("\n")[0].trim();
-        const matchPercentage = Number.parseInt(section.match(/Match:\s*(\d+)%/)?.[1] || "0");
-        const description = section.split("\n").slice(1).join("\n").trim();
+        const titleMatch = section.match(/^([^:]+?)(?:\n|:)/)
+        const title = titleMatch ? titleMatch[1].trim() : "Career Option"
+
+        const matchPercentage = Number.parseInt(section.match(/Match:\s*(\d+)%/i)?.[1] || "85")
+
+        // Get everything after the match percentage
+        const descriptionStart = section.indexOf("Match:")
+        const description =
+          descriptionStart > -1
+            ? section
+                .substring(descriptionStart)
+                .replace(/^Match:\s*\d+%/, "")
+                .trim()
+            : section.trim()
+
         return {
           title,
           match: matchPercentage,
           description,
-        };
-      });
+        }
+      })
+
+    // Ensure we have at least 3 details
+    if (details.length < 3) {
+      // Create generic details if needed
+      for (let i = details.length; i < 3; i++) {
+        if (professions[i]) {
+          details.push({
+            title: professions[i],
+            match: 70 + i * 5,
+            description: `This career path aligns with your skills and interests. It offers good growth potential and work-life balance. Consider developing additional skills in this area to enhance your career prospects.`,
+          })
+        }
+      }
+    }
 
     const parsedResult = {
       iq,
-      professions,
-      details,
-    };
+      professions: professions.slice(0, 3), // Ensure exactly 3 professions
+      details: details.slice(0, 3), // Ensure exactly 3 details
+    }
 
     // Store result for guest users
     if (guestId) {
-      let guestIdCookie = cookieStore.get("guestId")?.value;
+      let guestIdCookie = cookieStore.get("guestId")?.value
 
       if (!guestIdCookie) {
-        guestIdCookie = nanoid();
+        guestIdCookie = nanoid()
         cookieStore.set("guestId", guestIdCookie, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
           maxAge: 60 * 60 * 24 * 30, // 30 days
-        });
+        })
       }
 
-      await dbConnect();
+      await dbConnect()
       await GuestModel.findOneAndUpdate(
         { guestId: guestIdCookie },
         {
@@ -143,13 +210,14 @@ Return a structured response with:
           $setOnInsert: { guestId: guestIdCookie },
           $set: { lastActive: new Date() },
         },
-        { upsert: true, new: true }
-      );
+        { upsert: true, new: true },
+      )
     }
 
-    return NextResponse.json(parsedResult);
+    return NextResponse.json(parsedResult)
   } catch (error) {
-    console.error("API Error:", error);
-    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
+    console.error("API Error:", error)
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 })
   }
 }
+

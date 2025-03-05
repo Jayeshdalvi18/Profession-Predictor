@@ -54,7 +54,7 @@ export default function Footer() {
               </Link>
               <Link
                 className="text-muted-foreground hover:text-primary"
-                href="https://www.instagram.com/sharique1303/"
+                href="https://www.instagram.com/sharique1303"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -112,24 +112,6 @@ export default function Footer() {
               <MapPin className="h-4 w-4" />
               <span>Mumbai, India - 400612</span>
             </div>
-          </div>
-
-          {/* Newsletter */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Stay Updated</h3>
-            <p className="text-sm text-muted-foreground">
-              Subscribe to our newsletter for career insights and updates.
-            </p>
-            <form className="flex space-x-2">
-              <Input
-                type="email"
-                placeholder="Your email"
-                className="max-w-[200px]"
-              />
-              <Button type="submit" size="sm">
-                Subscribe
-              </Button>
-            </form>
           </div>
         </div>
 

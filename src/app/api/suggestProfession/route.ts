@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import { nanoid } from "nanoid"
-import { dbConnect } from "@/lib/dbConnect"
-import GuestModel from "@/models/Guest.models"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
@@ -13,31 +9,6 @@ export async function POST(req: Request) {
   try {
     const { hobbies, skills, education, workStyle, interests, languages, certifications, experience } = await req.json()
 
-    // Check guest user prediction limit
-    const cookieStore = await cookies()
-    const guestId = cookieStore.get("guestId")?.value
-
-    if (guestId) {
-      await dbConnect()
-      const guest = await GuestModel.findOne({ guestId })
-
-      if (guest && guest.predictionsCount >= MAX_GUEST_PREDICTIONS) {
-        return NextResponse.json(
-          {
-            error: "Guest prediction limit reached. Please sign up for unlimited predictions.",
-            limitReached: true,
-          },
-          { status: 403 },
-        )
-      }
-
-      // Increment prediction count
-      if (guest) {
-        guest.predictionsCount += 1
-        await guest.save()
-      }
-    }
-
     const prompt = `As a career counselor AI, analyze the following profile to provide comprehensive and detailed career guidance:
 
 IMPORTANT REQUIREMENTS:
@@ -47,6 +18,7 @@ IMPORTANT REQUIREMENTS:
 - Provide comprehensive analysis for each career with specific details
 - For the "Next Steps" section, provide 3 UNIQUE and SPECIFIC action items for each career path
 - Ensure all information is tailored to the individual's profile
+- Format your response in a clear, readable way with short paragraphs and bullet points
 
 Profile Details:
 - Hobbies: ${hobbies}
@@ -61,21 +33,21 @@ Profile Details:
 Your response MUST follow this exact structure:
 
 1. IQ ESTIMATE:
-   Provide an estimated IQ range (a specific number between 100-140) with a brief explanation based on the complexity of their skills, interests, and education.
+   Provide an estimated IQ range with a brief explanation based on the complexity of their skills, interests, and education.
 
 2. CAREER RECOMMENDATIONS:
-   List exactly 3 specific career paths that match their profile. Each must be unique and distinct.
+   List minimum 3 specific career paths that match their profile. Each must be unique and distinct.
 
 3. DETAILED ANALYSIS:
    For each career, provide:
    - Title: [Specific job title]
    - Match: [Percentage between 70-98%]
-   - Skills Alignment: Which of their skills directly apply to this career
-   - Growth Potential: Industry growth trends and advancement opportunities
-   - Work-Life Balance: How this career aligns with their preferred work style
-   - Required Skills: Specific skills they should develop
+   - Skills Alignment: Which of their skills directly apply to this career (bullet points)
+   - Growth Potential: Industry growth trends and advancement opportunities (short paragraph)
+   - Work-Life Balance: How this career aligns with their preferred work style (short paragraph)
+   - Required Skills: Specific skills they should develop (bullet points)
    - Salary Range: Realistic compensation expectations
-   - Career Progression: Clear advancement path over 5-10 years
+   - Career Progression: Clear advancement path over 5-10 years (bullet points)
 
 4. NEXT STEPS:
    For each career, provide 3 UNIQUE and SPECIFIC action items they should take to pursue this path, such as:
@@ -85,7 +57,7 @@ Your response MUST follow this exact structure:
    - Specific companies to target for employment
    - Mentorship or shadowing opportunities in the field
 
-Remember: Your response MUST include exactly 3 unique career recommendations with detailed analysis and specific next steps for each.`
+Remember: Your response MUST include exactly 3 unique career recommendations with detailed analysis and specific next steps for each. Format your response in a clear, readable way with short paragraphs and bullet points.`
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -172,46 +144,8 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
 
     const parsedResult = {
       iq,
-      professions: professions.slice(0, 3), // Ensure exactly 3 professions
-      details: details.slice(0, 3), // Ensure exactly 3 details
-    }
-
-    // Store result for guest users
-    if (guestId) {
-      let guestIdCookie = cookieStore.get("guestId")?.value
-
-      if (!guestIdCookie) {
-        guestIdCookie = nanoid()
-        cookieStore.set("guestId", guestIdCookie, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-        })
-      }
-
-      await dbConnect()
-      await GuestModel.findOneAndUpdate(
-        { guestId: guestIdCookie },
-        {
-          $push: {
-            predictions: {
-              hobbies,
-              skills,
-              education,
-              workStyle,
-              interests,
-              languages,
-              certifications,
-              experience,
-              result: parsedResult,
-            },
-          },
-          $setOnInsert: { guestId: guestIdCookie },
-          $set: { lastActive: new Date() },
-        },
-        { upsert: true, new: true },
-      )
+      professions: professions.slice(0, 5), // Ensure exactly 3 professions
+      details: details.slice(0, 5), // Ensure exactly 3 details
     }
 
     return NextResponse.json(parsedResult)

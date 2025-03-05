@@ -1,160 +1,217 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
-import * as React from "react";
+import { Body, Button, Container, Head, Heading, Html, Img, Preview, Section, Text, Hr } from "@react-email/components"
 
 interface VerificationEmailProps {
-  username: string;
-  email: string;
-  otp: string;
+  username: string
+  email: string
+  otp: string
 }
-const baseUrl = process.env.BASE_URL || "http://localhost:3000";
 
+// Get the base URL from environment variables or use a default
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
-
-const VerificationEmail = ({
-  username,
-  email,
-  otp,
-}: VerificationEmailProps) => (
+const VerificationEmail = ({ username, email, otp }: VerificationEmailProps) => (
   <Html>
     <Head />
-    <Preview>Verify your account on Our Platform</Preview>
+    <Preview>Your verification code for Profession Predictor: {otp}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Account Verification</Heading>
-
-        <Text style={text}>
-          Hello <strong>{username}</strong>, <br />
-          Thank you for signing up! Please verify your account using the details
-          below:
-        </Text>
-
-        <Section style={infoContainer}>
-          <Text style={infoText}>
-            <strong>Email:</strong> {email}
-          </Text>
-          <Text style={infoText}>
-            <strong>One-Time Password (OTP):</strong>
-          </Text>
-          <Text style={otpCode}>{otp}</Text>
+        {/* Header with Logo */}
+        <Section style={header}>
+          <Img src={`${baseUrl}/logo.png`} width="120" height="40" alt="Profession Predictor" style={logo} />
         </Section>
 
-        <Text style={text}>
-          This OTP is valid for <strong>10 minutes</strong>. Enter it on the
-          verification page to complete your registration.
-        </Text>
+        <Hr style={divider} />
 
-        <Section style={buttonContainer}>
-          <Button style={button} href={`${baseUrl}/verify/${username}`}>
-            Verify Account
-          </Button>
+        <Section style={content}>
+          <Heading style={h1}>Verify Your Account</Heading>
+
+          <Text style={text}>
+            Hello <strong>{username}</strong>,
+          </Text>
+
+          <Text style={text}>
+            Thank you for signing up with Profession Predictor! To complete your registration and access personalized
+            career recommendations, please verify your account using the verification code below.
+          </Text>
+
+          {/* OTP Display */}
+          <Section style={otpContainer}>
+            <Text style={otpLabel}>Your Verification Code</Text>
+            <Text style={otpCode}>{otp}</Text>
+          </Section>
+
+          <Text style={instructionText}>
+            Enter this code on the verification page or click the button below to verify your account.
+          </Text>
+
+          {/* Verification Button */}
+          <Section style={buttonContainer}>
+            <Button style={button} href={`${baseUrl}/verify/${encodeURIComponent(username)}`}>
+              Verify My Account
+            </Button>
+          </Section>
+
+          {/* Expiration Notice */}
+          <Text style={expirationText}>
+            This code will expire in <strong>60 minutes</strong>.
+          </Text>
+
+          <Hr style={divider} />
+
+          {/* Help Section */}
+          <Section style={helpSection}>
+            <Text style={helpText}>If you didn't create an account with us, you can safely ignore this email.</Text>
+            <Text style={helpText}>
+              Having trouble? Contact our support team at{" "}
+              <a href="mailto:support@professionpredictor.com" style={link}>
+                support@professionpredictor.com
+              </a>
+            </Text>
+          </Section>
         </Section>
 
-        <Text style={text}>
-          If you didn&apos;t request this email, please ignore it or contact our
-          support team.
-        </Text>
-
-        <Text style={footer}>
-          Best regards, <br />
-          <strong>Your Platform Team</strong>
-        </Text>
+        {/* Footer */}
+        <Section style={footer}>
+          <Text style={footerText}>© {new Date().getFullYear()} Profession Predictor. All rights reserved.</Text>
+          <Text style={footerText}>Our mailing address: 123 AI Street, Tech City, TC 12345</Text>
+        </Section>
       </Container>
     </Body>
   </Html>
-);
+)
 
-export default VerificationEmail;
+export default VerificationEmail
 
 // Styles
 const main = {
-  backgroundColor: "#f9f9f9",
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+  backgroundColor: "#f5f7fa",
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   padding: "20px",
-};
+}
 
 const container = {
   margin: "0 auto",
-  padding: "20px",
-  width: "580px",
+  maxWidth: "600px",
   backgroundColor: "#ffffff",
   borderRadius: "8px",
-  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-};
+  overflow: "hidden",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+}
+
+const header = {
+  padding: "24px",
+  textAlign: "center" as const,
+}
+
+const logo = {
+  margin: "0 auto",
+}
+
+const content = {
+  padding: "0 32px",
+}
 
 const h1 = {
-  color: "#333",
-  fontSize: "22px",
+  color: "#111827",
+  fontSize: "24px",
   fontWeight: "bold",
   textAlign: "center" as const,
-  paddingBottom: "20px",
-};
+  margin: "32px 0 24px",
+}
 
 const text = {
-  color: "#333",
+  color: "#374151",
   fontSize: "16px",
   lineHeight: "24px",
-  textAlign: "center" as const,
-  padding: "10px 0",
-};
+  margin: "16px 0",
+}
 
-const infoContainer = {
-  backgroundColor: "#f1f5f9",
-  padding: "15px",
-  borderRadius: "6px",
-  textAlign: "center" as const,
-  marginBottom: "20px",
-};
-
-const infoText = {
-  color: "#333",
+const instructionText = {
+  color: "#374151",
   fontSize: "16px",
+  lineHeight: "24px",
+  margin: "16px 0",
+  textAlign: "center" as const,
+}
+
+const otpContainer = {
+  backgroundColor: "#f3f4f6",
+  borderRadius: "8px",
+  padding: "24px",
+  margin: "24px 0",
+  textAlign: "center" as const,
+}
+
+const otpLabel = {
+  color: "#4b5563",
+  fontSize: "14px",
   marginBottom: "8px",
-};
+}
 
 const otpCode = {
+  color: "#111827",
   fontSize: "32px",
   fontWeight: "bold",
-  color: "#0070f3",
-  letterSpacing: "4px",
-  backgroundColor: "#eaf4ff",
-  padding: "10px",
-  borderRadius: "4px",
-  display: "inline-block",
-};
+  letterSpacing: "8px",
+  margin: "0",
+}
 
 const buttonContainer = {
-  padding: "20px 0",
   textAlign: "center" as const,
-};
+  margin: "32px 0",
+}
 
 const button = {
-  backgroundColor: "#0070f3",
-  borderRadius: "5px",
+  backgroundColor: "#4f46e5",
+  borderRadius: "6px",
   color: "#ffffff",
   fontSize: "16px",
+  fontWeight: "bold",
   textDecoration: "none",
   textAlign: "center" as const,
   display: "inline-block",
   padding: "12px 24px",
-  width: "200px",
-  fontWeight: "bold",
-};
+  cursor: "pointer",
+}
+
+const expirationText = {
+  color: "#6b7280",
+  fontSize: "14px",
+  textAlign: "center" as const,
+  margin: "16px 0 32px",
+}
+
+const divider = {
+  borderColor: "#e5e7eb",
+  margin: "0",
+}
+
+const helpSection = {
+  padding: "24px 0",
+}
+
+const helpText = {
+  color: "#6b7280",
+  fontSize: "14px",
+  lineHeight: "20px",
+  margin: "8px 0",
+}
+
+const link = {
+  color: "#4f46e5",
+  textDecoration: "none",
+}
 
 const footer = {
-  color: "#898989",
-  fontSize: "14px",
-  lineHeight: "22px",
+  backgroundColor: "#f9fafb",
+  padding: "24px 32px",
   textAlign: "center" as const,
-  marginTop: "20px",
-};
+}
+
+const footerText = {
+  color: "#9ca3af",
+  fontSize: "12px",
+  lineHeight: "18px",
+  margin: "4px 0",
+}
+

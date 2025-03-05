@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle, Info } from 'lucide-react'
+import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +43,7 @@ export default function Home() {
     details: { title: string; match: number; description: string }[]
   } | null>(null)
 
+  // Reset form and go back to step 1
   const resetForm = () => {
     setFormData({
       hobbies: "",
@@ -53,18 +54,18 @@ export default function Home() {
       languages: "",
       certifications: "",
       experience: "",
-    });
-    setStep(1);
-    setResult(null);
-    setError(null);
-  };
+    })
+    setStep(1)
+    setResult(null)
+    setError(null)
+  }
 
   // Fetch guest predictions count on component mount
   useEffect(() => {
     const fetchPredictionsCount = async () => {
       if (status === "unauthenticated") {
         try {
-          const response = await fetch("/api/predictions-count")
+          const response = await fetch("/api/guest/predictions-count")
           if (response.ok) {
             const data = await response.json()
             setPredictionsCount(data.count)
@@ -166,6 +167,33 @@ export default function Home() {
   }
 
   const prevStep = () => setStep(step - 1)
+
+  // Format description text for better readability
+  const formatDescription = (text: string) => {
+    // Replace bullet points with proper HTML
+    let formatted = text
+      .replace(/•\s+/g, "• ")
+      .replace(/\n-\s+/g, "\n• ")
+      .replace(/\n\s*\n/g, "\n\n")
+      .replace(/:\s+/g, ": ")
+
+    // Split by sections
+    const sections = [
+      "Skills Alignment",
+      "Growth Potential",
+      "Work-Life Balance",
+      "Required Skills",
+      "Salary Range",
+      "Career Progression",
+      "Next Steps",
+    ]
+
+    sections.forEach((section) => {
+      formatted = formatted.replace(new RegExp(`${section}:`, "g"), `\n\n**${section}:**`)
+    })
+
+    return formatted
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
@@ -364,16 +392,13 @@ export default function Home() {
               )}
 
               {step === 3 && result && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  className="space-y-8"
-                >
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertTitle>Disclaimer</AlertTitle>
                     <AlertDescription>
-                      The career suggestions provided are based on the information you&apos;ve entered and should be used as a starting point for further exploration.
+                      The career suggestions provided are based on the information you&apos;ve entered and should be
+                      used as a starting point for further exploration.
                     </AlertDescription>
                   </Alert>
 
@@ -435,7 +460,20 @@ export default function Home() {
                               </div>
                             </CardHeader>
                             <CardContent>
-                              <p className="whitespace-pre-line">{detail.description}</p>
+                              <div className="prose prose-sm max-w-none">
+                                {detail.description.split("\n\n").map((paragraph, i) => (
+                                  <p key={i} className="mb-2">
+                                    {paragraph.startsWith("**") ? (
+                                      <>
+                                        <strong>{paragraph.substring(2, paragraph.indexOf(":**"))}</strong>
+                                        {paragraph.substring(paragraph.indexOf(":**") + 3)}
+                                      </>
+                                    ) : (
+                                      paragraph
+                                    )}
+                                  </p>
+                                ))}
+                              </div>
                             </CardContent>
                           </Card>
                         ))}
@@ -449,18 +487,24 @@ export default function Home() {
                           <CardDescription>Follow these steps to pursue your career path</CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-4">
+                          <div className="space-y-6">
                             {result.details?.map((detail, index) => (
-                              <li key={index} className="space-y-2">
-                                <h4 className="font-semibold">{detail.title}</h4>
-                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                  <li>Research the role requirements and responsibilities</li>
-                                  <li>Develop key skills identified in the analysis</li>
-                                  <li>Network with professionals in this field</li>
+                              <div key={index} className="space-y-2">
+                                <h4 className="font-semibold text-lg flex items-center gap-2">
+                                  <Badge>{index + 1}</Badge> {detail.title}
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 pl-4">
+                                  <li>
+                                    Complete relevant certifications or courses in {detail.title.toLowerCase()} field
+                                  </li>
+                                  <li>Build a portfolio showcasing your skills and projects</li>
+                                  <li>
+                                    Network with professionals in this industry through LinkedIn or industry events
+                                  </li>
                                 </ul>
-                              </li>
+                              </div>
                             ))}
-                          </ul>
+                          </div>
                         </CardContent>
                       </Card>
                     </TabsContent>
@@ -513,3 +557,4 @@ export default function Home() {
     </div>
   )
 }
+

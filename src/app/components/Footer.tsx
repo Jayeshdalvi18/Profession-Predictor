@@ -102,7 +102,7 @@ export default function Footer() {
             <h3 className="text-lg font-semibold">Contact Us</h3>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Mail className="h-4 w-4" />
-              <span>khanshariq2213@gmail.com</span>
+              <span>khanshariq92213@gmail.com</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Phone className="h-4 w-4" />

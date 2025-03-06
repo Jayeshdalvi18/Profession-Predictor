@@ -2,17 +2,14 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle, Info } from "lucide-react"
+import { Sparkles, Brain, Briefcase, GraduationCap, Heart, AlertCircle, Info, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
@@ -20,52 +17,34 @@ import { useRouter } from "next/navigation"
 import { GuestAlert } from "@/components/guest-alert"
 
 export default function Home() {
-  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [predictionsCount, setPredictionsCount] = useState(0)
   const { toast } = useToast()
   const { status } = useSession()
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    hobbies: "",
-    skills: "",
-    education: "",
-    interests: "",
-    workStyle: "",
-    languages: "",
-    certifications: "",
-    experience: "",
-  })
+  const [userBio, setUserBio] = useState("")
+  const [showForm, setShowForm] = useState(true)
   const [result, setResult] = useState<{
     iq: number
     professions: string[]
     details: { title: string; match: number; description: string }[]
   } | null>(null)
 
-  // Reset form and go back to step 1
+  // Reset form and start over
   const resetForm = () => {
-    setFormData({
-      hobbies: "",
-      skills: "",
-      education: "",
-      interests: "",
-      workStyle: "",
-      languages: "",
-      certifications: "",
-      experience: "",
-    })
-    setStep(1)
+    setUserBio("")
+    setShowForm(true)
     setResult(null)
     setError(null)
   }
 
   // Fetch guest predictions count on component mount
-  useEffect(() => {
+  useState(() => {
     const fetchPredictionsCount = async () => {
       if (status === "unauthenticated") {
         try {
-          const response = await fetch("/api/guest/predictions-count")
+          const response = await fetch("/api/predictions-count")
           if (response.ok) {
             const data = await response.json()
             setPredictionsCount(data.count)
@@ -76,27 +55,17 @@ export default function Home() {
       }
     }
     fetchPredictionsCount()
-  }, [status])
+  })
 
   const validateForm = () => {
-    if (step === 1) {
-      if (!formData.hobbies.trim() || !formData.skills.trim()) {
-        toast({
-          title: "Missing Information",
-          description: "Please fill in both hobbies and skills fields",
-          variant: "destructive",
-        })
-        return false
-      }
-    } else if (step === 2) {
-      if (!formData.education || !formData.workStyle || !formData.interests.trim()) {
-        toast({
-          title: "Missing Information",
-          description: "Please fill in all required fields before proceeding",
-          variant: "destructive",
-        })
-        return false
-      }
+    if (!userBio.trim() || userBio.length < 30) {
+      toast({
+        title: "Insufficient Information",
+        description:
+          "Please provide a detailed description of yourself (at least 100 characters) for accurate analysis.",
+        variant: "destructive",
+      })
+      return false
     }
     return true
   }
@@ -114,7 +83,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ userBio }),
       })
 
       if (!response.ok) {
@@ -137,7 +106,7 @@ export default function Home() {
       }
 
       setResult(data)
-      setStep(3)
+      setShowForm(false)
 
       // Update predictions count for guest users
       if (status === "unauthenticated") {
@@ -159,14 +128,6 @@ export default function Home() {
       setLoading(false)
     }
   }
-
-  const nextStep = () => {
-    if (validateForm()) {
-      setStep(step + 1)
-    }
-  }
-
-  const prevStep = () => setStep(step - 1)
 
   // Format description text for better readability
   const formatDescription = (text: string) => {
@@ -209,7 +170,7 @@ export default function Home() {
             Discover Your <span className="text-primary">Perfect Career</span>
           </h1>
           <p className="mx-auto max-w-[700px] text-gray-500 text-sm md:text-base lg:text-lg xl:text-xl">
-            Let AI analyze your profile and suggest the ideal career path tailored just for you
+            Let AI analyze your life experiences and suggest the ideal career path tailored just for you
           </p>
         </motion.div>
 
@@ -236,170 +197,84 @@ export default function Home() {
           <CardHeader className="space-y-2 text-center sm:text-left">
             <CardTitle className="text-2xl sm:text-3xl">Career Profile Analysis</CardTitle>
             <CardDescription className="text-sm sm:text-base">
-              Tell us about yourself to get personalized career suggestions
+              {showForm
+                ? "Tell us about your life experiences to get personalized career suggestions"
+                : "Your personalized career analysis based on your life experiences"}
             </CardDescription>
             {status === "unauthenticated" && <GuestAlert predictionsCount={predictionsCount} maxPredictions={3} />}
           </CardHeader>
           <CardContent>
-            <div className="mb-8">
-              <Progress value={step * 33.33} className="h-2" />
-            </div>
+            {showForm ? (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              {step === 1 && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                  <div className="space-y-4">
-                    <Label>What are your hobbies?</Label>
-                    <Textarea
-                      placeholder="E.g., programming, reading, playing music..."
-                      className="min-h-[100px]"
-                      value={formData.hobbies}
-                      onChange={(e) => setFormData({ ...formData, hobbies: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <Label>What skills do you possess?</Label>
-                    <Textarea
-                      placeholder="E.g., problem-solving, communication, leadership..."
-                      className="min-h-[100px]"
-                      value={formData.skills}
-                      onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <Label>Languages Known</Label>
-                    <Textarea
-                      placeholder="E.g., English (Native), Spanish (Intermediate)..."
-                      className="min-h-[100px]"
-                      value={formData.languages}
-                      onChange={(e) => setFormData({ ...formData, languages: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button onClick={nextStep}>Next Step</Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 2 && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                  <div className="space-y-4">
-                    <Label>Education Level</Label>
-                    <Select
-                      value={formData.education}
-                      onValueChange={(value) => setFormData({ ...formData, education: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your education level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high-school">High School</SelectItem>
-                        <SelectItem value="associate">Associate&apos;s Degree</SelectItem>
-                        <SelectItem value="bachelors">Bachelor&apos;s Degree</SelectItem>
-                        <SelectItem value="masters">Master&apos;s Degree</SelectItem>
-                        <SelectItem value="phd">Ph.D.</SelectItem>
-                        <SelectItem value="certification">Professional Certification</SelectItem>
-                        <SelectItem value="self-taught">Self-Taught</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label>Preferred Work Style</Label>
-                    <Select
-                      value={formData.workStyle}
-                      onValueChange={(value) => setFormData({ ...formData, workStyle: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your preferred work style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="remote">Remote Work</SelectItem>
-                        <SelectItem value="office">Office Based</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="flexible">Flexible Hours</SelectItem>
-                        <SelectItem value="shift">Shift Work</SelectItem>
-                        <SelectItem value="travel">Travel Required</SelectItem>
-                        <SelectItem value="freelance">Freelance/Contract</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label>Experience Level</Label>
-                    <Select
-                      value={formData.experience}
-                      onValueChange={(value) => setFormData({ ...formData, experience: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your experience level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="entry">Entry Level</SelectItem>
-                        <SelectItem value="junior">Junior (1-3 years)</SelectItem>
-                        <SelectItem value="mid">Mid-Level (3-5 years)</SelectItem>
-                        <SelectItem value="senior">Senior (5+ years)</SelectItem>
-                        <SelectItem value="lead">Lead/Manager</SelectItem>
-                        <SelectItem value="executive">Executive</SelectItem>
-                        <SelectItem value="student">Student/Intern</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label>Professional Certifications</Label>
-                    <Textarea
-                      placeholder="List any professional certifications you have..."
-                      className="min-h-[100px]"
-                      value={formData.certifications}
-                      onChange={(e) => setFormData({ ...formData, certifications: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label>Areas of Interest</Label>
-                    <Textarea
-                      placeholder="E.g., technology, healthcare, education..."
-                      className="min-h-[100px]"
-                      value={formData.interests}
-                      onChange={(e) => setFormData({ ...formData, interests: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={prevStep}>
-                      Previous
-                    </Button>
-                    <Button type="submit" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        "Get Results"
-                      )}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 3 && result && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                <div className="space-y-4">
                   <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Disclaimer</AlertTitle>
+                    <FileText className="h-4 w-4" />
+                    <AlertTitle>How to get accurate results</AlertTitle>
                     <AlertDescription>
-                      The career suggestions provided are based on the information you&apos;ve entered and should be
-                      used as a starting point for further exploration. These results are not definitive and may not
-                      account for all factors that influence career choices.
+                      <p className="mb-2">For the most accurate career predictions, please include details about:</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Your educational background and qualifications</li>
+                        <li>Skills you've developed (technical and soft skills)</li>
+                        <li>Hobbies and activities you enjoy</li>
+                        <li>Work experiences (if any)</li>
+                        <li>Your interests and passions</li>
+                        <li>How you prefer to work (team/solo, structured/flexible)</li>
+                        <li>Languages you speak</li>
+                        <li>Any certifications you have</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+
+                  <Textarea
+                    placeholder="Tell us about yourself in detail. Include your education, skills, hobbies, work experiences, interests, and how you prefer to work..."
+                    className="min-h-[250px]"
+                    value={userBio}
+                    onChange={(e) => setUserBio(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      "Get Career Suggestions"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              result && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                  <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+                    <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <AlertTitle className="text-amber-800 dark:text-amber-300">Important Disclaimer</AlertTitle>
+                    <AlertDescription className="text-amber-700 dark:text-amber-400">
+                      <p className="mb-2">The career suggestions and IQ estimate provided are:</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Based solely on the text information you've provided</li>
+                        <li>Not a substitute for professional career counseling or psychometric testing</li>
+                        <li>Intended as exploratory guidance rather than definitive assessment</li>
+                        <li>Limited by the AI's understanding of your unique circumstances</li>
+                        <li>
+                          Not considering all factors that influence career success (like local job markets, economic
+                          conditions, etc.)
+                        </li>
+                      </ul>
+                      <p className="mt-2">
+                        We recommend using these insights as a starting point for further research and exploration.
+                      </p>
                     </AlertDescription>
                   </Alert>
 
@@ -519,8 +394,8 @@ export default function Home() {
                     </Button>
                   </div>
                 </motion.div>
-              )}
-            </form>
+              )
+            )}
           </CardContent>
         </Card>
       </section>
@@ -533,7 +408,7 @@ export default function Home() {
               <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               <CardTitle className="text-lg sm:text-xl">AI-Powered Analysis</CardTitle>
               <CardDescription className="text-sm">
-                Advanced algorithms analyze your profile to provide accurate career suggestions
+                Advanced algorithms analyze your life experiences to provide accurate career suggestions
               </CardDescription>
             </CardHeader>
           </Card>
@@ -542,7 +417,7 @@ export default function Home() {
               <Briefcase className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               <CardTitle className="text-lg sm:text-xl">Personalized Matches</CardTitle>
               <CardDescription className="text-sm">
-                Get career suggestions tailored to your unique combination of skills and interests
+                Get career suggestions tailored to your unique combination of skills, experiences, and interests
               </CardDescription>
             </CardHeader>
           </Card>

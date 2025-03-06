@@ -11,7 +11,7 @@ const MAX_GUEST_PREDICTIONS = 3
 
 export async function POST(req: Request) {
   try {
-    const { hobbies, skills, education, workStyle, interests, languages, certifications, experience } = await req.json()
+    const { userBio } = await req.json()
 
     // Check guest user prediction limit
     const cookieStore = await cookies()
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const prompt = `As a career counselor AI, analyze the following profile to provide comprehensive and detailed career guidance:
+    const prompt = `As a career counselor AI, analyze the following personal biography to provide comprehensive and detailed career guidance:
 
 IMPORTANT REQUIREMENTS:
 - You MUST suggest EXACTLY 3 unique and distinct career paths that are well-suited to the profile
@@ -57,16 +57,10 @@ IMPORTANT REQUIREMENTS:
 - For the "Next Steps" section, provide 3 UNIQUE and SPECIFIC action items for each career path
 - Ensure all information is tailored to the individual's profile
 - Format your response in a clear, readable way with short paragraphs and bullet points
+- Base your analysis on real-world career paths and requirements
 
-Profile Details:
-- Hobbies: ${hobbies}
-- Skills: ${skills}
-- Education: ${education}
-- Work Style: ${workStyle}
-- Interests: ${interests}
-- Languages: ${languages || "Not specified"}
-- Certifications: ${certifications || "Not specified"}
-- Experience: ${experience || "Not specified"}
+Personal Biography:
+${userBio}
 
 Your response MUST follow this exact structure:
 

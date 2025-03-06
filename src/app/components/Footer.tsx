@@ -1,15 +1,5 @@
-import {
-  Github,
-  Linkedin,
-  Twitter,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
-} from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Github, Linkedin, Twitter, Instagram, Mail, Phone, MapPin } from "lucide-react"
+import Link from "next/link"
 
 export default function Footer() {
   return (
@@ -21,8 +11,7 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Profession Predictor</h3>
             <p className="text-sm text-muted-foreground">
-              Empowering your career decisions with AI-driven insights and
-              personalized guidance.
+              Empowering your career decisions with AI-driven insights and personalized guidance.
             </p>
             <div className="flex space-x-4">
               <Link
@@ -54,7 +43,7 @@ export default function Footer() {
               </Link>
               <Link
                 className="text-muted-foreground hover:text-primary"
-                href="https://www.instagram.com/sharique1303"
+                href="https://www.instagram.com/sharique1303/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -68,22 +57,13 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <nav className="flex flex-col space-y-2">
-              <Link
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                href="/"
-              >
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/">
                 Home
               </Link>
-              <Link
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                href="/about"
-              >
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/about">
                 About Us
               </Link>
-              <Link
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                href="/contact"
-              >
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/contact">
                 Contact Us
               </Link>
               <Link
@@ -102,15 +82,15 @@ export default function Footer() {
             <h3 className="text-lg font-semibold">Contact Us</h3>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Mail className="h-4 w-4" />
-              <span>khanshariq92213@gmail.com</span>
+              <span>info@professionpredictor.com</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Phone className="h-4 w-4" />
-              <span>+91 72081 79779</span>
+              <span>+1 (555) 123-4567</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>Mumbai, India - 400612</span>
+              <span>123 AI Street, Tech City, TC 12345</span>
             </div>
           </div>
         </div>
@@ -119,26 +99,16 @@ export default function Footer() {
         <div className="mt-8 border-t pt-8">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Profession Predictor. All rights
-              reserved.
+              © {new Date().getFullYear()} Profession Predictor. All rights reserved.
             </p>
             <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
-              <Link
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                href="/privacy"
-              >
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/privacy">
                 Privacy Policy
               </Link>
-              <Link
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                href="/terms"
-              >
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/terms">
                 Terms of Service
               </Link>
-              <Link
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                href="/cookies"
-              >
+              <Link className="text-sm text-muted-foreground hover:text-primary hover:underline" href="/cookies">
                 Cookie Policy
               </Link>
             </nav>
@@ -146,5 +116,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  );
+  )
 }
+

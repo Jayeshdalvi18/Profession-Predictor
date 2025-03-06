@@ -1,13 +1,51 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
+import { dbConnect } from "@/lib/dbConnect"
+import GuestModel from "@/models/Guest.models"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
+// Maximum number of predictions allowed for guest users
 const MAX_GUEST_PREDICTIONS = 3
 
 export async function POST(req: Request) {
   try {
     const { hobbies, skills, education, workStyle, interests, languages, certifications, experience } = await req.json()
+
+    // Check guest user prediction limit
+    const cookieStore = await cookies()
+    const guestId = cookieStore.get("guestId")?.value
+
+    if (guestId) {
+      await dbConnect()
+      const guest = await GuestModel.findOne({ guestId })
+
+      if (guest && guest.predictionsCount >= MAX_GUEST_PREDICTIONS) {
+        return NextResponse.json(
+          {
+            error: "Guest prediction limit reached. Please sign up for unlimited predictions.",
+            limitReached: true,
+          },
+          { status: 403 },
+        )
+      }
+
+      // Increment prediction count for guest users
+      if (guest) {
+        guest.predictionsCount += 1
+        guest.lastActive = new Date()
+        await guest.save()
+      } else {
+        // Create new guest record if it doesn't exist
+        await GuestModel.create({
+          guestId,
+          predictionsCount: 1,
+          createdAt: new Date(),
+          lastActive: new Date(),
+        })
+      }
+    }
 
     const prompt = `As a career counselor AI, analyze the following profile to provide comprehensive and detailed career guidance:
 
@@ -33,10 +71,10 @@ Profile Details:
 Your response MUST follow this exact structure:
 
 1. IQ ESTIMATE:
-   Provide an estimated IQ range with a brief explanation based on the complexity of their skills, interests, and education.
+   Provide an estimated IQ range (a specific number between 100-140) with a brief explanation based on the complexity of their skills, interests, and education.
 
 2. CAREER RECOMMENDATIONS:
-   List minimum 3 specific career paths that match their profile. Each must be unique and distinct.
+   List exactly 3 specific career paths that match their profile. Each must be unique and distinct.
 
 3. DETAILED ANALYSIS:
    For each career, provide:
@@ -144,8 +182,8 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
 
     const parsedResult = {
       iq,
-      professions: professions.slice(0, 5), // Ensure exactly 3 professions
-      details: details.slice(0, 5), // Ensure exactly 3 details
+      professions: professions.slice(0, 3), // Ensure exactly 3 professions
+      details: details.slice(0, 3), // Ensure exactly 3 details
     }
 
     return NextResponse.json(parsedResult)

@@ -398,7 +398,8 @@ export default function Home() {
                     <AlertTitle>Disclaimer</AlertTitle>
                     <AlertDescription>
                       The career suggestions provided are based on the information you&apos;ve entered and should be
-                      used as a starting point for further exploration.
+                      used as a starting point for further exploration. These results are not definitive and may not
+                      account for all factors that influence career choices.
                     </AlertDescription>
                   </Alert>
 
@@ -461,18 +462,20 @@ export default function Home() {
                             </CardHeader>
                             <CardContent>
                               <div className="prose prose-sm max-w-none">
-                                {detail.description.split("\n\n").map((paragraph, i) => (
-                                  <p key={i} className="mb-2">
-                                    {paragraph.startsWith("**") ? (
-                                      <>
-                                        <strong>{paragraph.substring(2, paragraph.indexOf(":**"))}</strong>
-                                        {paragraph.substring(paragraph.indexOf(":**") + 3)}
-                                      </>
-                                    ) : (
-                                      paragraph
-                                    )}
-                                  </p>
-                                ))}
+                                {formatDescription(detail.description)
+                                  .split("\n\n")
+                                  .map((paragraph, i) => (
+                                    <p key={i} className="mb-2">
+                                      {paragraph.startsWith("**") ? (
+                                        <>
+                                          <strong>{paragraph.substring(2, paragraph.indexOf(":**"))}</strong>
+                                          {paragraph.substring(paragraph.indexOf(":**") + 3)}
+                                        </>
+                                      ) : (
+                                        paragraph
+                                      )}
+                                    </p>
+                                  ))}
                               </div>
                             </CardContent>
                           </Card>

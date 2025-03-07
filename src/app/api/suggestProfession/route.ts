@@ -11,7 +11,7 @@ const MAX_GUEST_PREDICTIONS = 3
 
 export async function POST(req: Request) {
   try {
-    const { userBio } = await req.json()
+    const formData = await req.json()
 
     // Check guest user prediction limit
     const cookieStore = await cookies()
@@ -47,49 +47,53 @@ export async function POST(req: Request) {
       }
     }
 
-    const prompt = `As a career counselor AI, analyze the following personal biography to provide comprehensive and detailed career guidance:
+    // Convert form data to a structured biography for AI analysis
+    const userBio = constructUserBio(formData)
+
+    const prompt = `As a career counselor AI, analyze the following personal profile to provide comprehensive and detailed career guidance:
 
 IMPORTANT REQUIREMENTS:
-- You MUST suggest EXACTLY 3 unique and distinct career paths that are well-suited to the profile
+- You MUST suggest EXACTLY 5 unique and distinct career paths that are well-suited to the profile
 - Each career suggestion must be detailed and specific (not general categories)
 - Each career must have a unique match percentage between 70-98%
-- Provide comprehensive analysis for each career with specific details
-- For the "Next Steps" section, provide 3 UNIQUE and SPECIFIC action items for each career path
+- Provide simple, clear analysis for each career without using special characters or formatting
+- For the Next Steps section, provide 3 clear action items for each career path
 - Ensure all information is tailored to the individual's profile
-- Format your response in a clear, readable way with short paragraphs and bullet points
+- Use simple language and clear sentences
 - Base your analysis on real-world career paths and requirements
+- Consider the person's age group and life stage in your recommendations
 
-Personal Biography:
+Personal Profile:
 ${userBio}
 
 Your response MUST follow this exact structure:
 
 1. IQ ESTIMATE:
-   Provide an estimated IQ range (a specific number between 100-140) with a brief explanation based on the complexity of their skills, interests, and education.
+   Provide an estimated IQ range (a specific number between 100-140) with a brief explanation.
 
 2. CAREER RECOMMENDATIONS:
-   List exactly 3 specific career paths that match their profile. Each must be unique and distinct.
+   List exactly 5 specific career paths that match their profile.
 
 3. DETAILED ANALYSIS:
    For each career, provide:
-   - Title: [Specific job title]
-   - Match: [Percentage between 70-98%]
-   - Skills Alignment: Which of their skills directly apply to this career (bullet points)
-   - Growth Potential: Industry growth trends and advancement opportunities (short paragraph)
-   - Work-Life Balance: How this career aligns with their preferred work style (short paragraph)
-   - Required Skills: Specific skills they should develop (bullet points)
-   - Salary Range: Realistic compensation expectations
-   - Career Progression: Clear advancement path over 5-10 years (bullet points)
+   Title: [Specific job title]
+   Match: [Percentage between 70-98%]
+   Skills Alignment: List their relevant skills for this career
+   Growth Potential: Simple description of industry trends and opportunities
+   Work-Life Balance: How this career fits their preferred work style
+   Required Skills: List of skills they need to develop
+   Salary Range: Expected compensation range
+   Career Progression: Clear 5-10 year career path
 
 4. NEXT STEPS:
-   For each career, provide 3 UNIQUE and SPECIFIC action items they should take to pursue this path, such as:
-   - Specific courses or certifications to obtain
-   - Industry-specific networking opportunities
-   - Particular projects to build their portfolio
-   - Specific companies to target for employment
-   - Mentorship or shadowing opportunities in the field
+   For each career, list 3 clear action items they should take, such as:
+   - Specific courses or certifications
+   - Networking opportunities
+   - Portfolio projects
+   - Target companies
+   - Mentorship opportunities
 
-Remember: Your response MUST include exactly 3 unique career recommendations with detailed analysis and specific next steps for each. Format your response in a clear, readable way with short paragraphs and bullet points.`
+Remember: Keep the language simple and clear. Avoid special characters or complex formatting.`
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -114,18 +118,19 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
           .map((p) => p.replace(/^\s*-\s*/, "").trim())
       : []
 
-    // Ensure we have at least 3 professions
-    if (professions.length < 3) {
-      // Add generic professions if needed
+    // Ensure we have exactly 5 professions
+    if (professions.length < 5) {
       const genericProfessions = [
         "Software Developer",
         "Data Analyst",
         "Project Manager",
         "Marketing Specialist",
         "Financial Advisor",
+        "Business Consultant",
+        "UX Designer",
       ]
 
-      while (professions.length < 3) {
+      while (professions.length < 5) {
         const genericProfession = genericProfessions[professions.length % genericProfessions.length]
         if (!professions.includes(genericProfession)) {
           professions.push(genericProfession)
@@ -143,15 +148,24 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
 
         const matchPercentage = Number.parseInt(section.match(/Match:\s*(\d+)%/i)?.[1] || "85")
 
-        // Get everything after the match percentage
+        // Get everything after the match percentage and simplify formatting
         const descriptionStart = section.indexOf("Match:")
-        const description =
+        let description =
           descriptionStart > -1
             ? section
                 .substring(descriptionStart)
                 .replace(/^Match:\s*\d+%/, "")
                 .trim()
             : section.trim()
+
+        // Simplify formatting
+        description = description
+          .replace(/[•\-*]/g, "") // Remove bullets and special characters
+          .replace(/\n+/g, "\n") // Normalize line breaks
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .join("\n")
 
         return {
           title,
@@ -160,10 +174,9 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
         }
       })
 
-    // Ensure we have at least 3 details
-    if (details.length < 3) {
-      // Create generic details if needed
-      for (let i = details.length; i < 3; i++) {
+    // Ensure we have exactly 5 details
+    if (details.length < 5) {
+      for (let i = details.length; i < 5; i++) {
         if (professions[i]) {
           details.push({
             title: professions[i],
@@ -176,8 +189,8 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
 
     const parsedResult = {
       iq,
-      professions: professions.slice(0, 3), // Ensure exactly 3 professions
-      details: details.slice(0, 3), // Ensure exactly 3 details
+      professions: professions.slice(0, 5), // Ensure exactly 5 professions
+      details: details.slice(0, 5), // Ensure exactly 5 details
     }
 
     return NextResponse.json(parsedResult)
@@ -185,5 +198,84 @@ Remember: Your response MUST include exactly 3 unique career recommendations wit
     console.error("API Error:", error)
     return NextResponse.json({ error: "Failed to process request" }, { status: 500 })
   }
+}
+
+// Helper function to construct a structured biography from form data
+interface FormData {
+  ageGroup?: string;
+  education?: string;
+  workStyle?: string;
+  skills?: string;
+  hobbies?: string;
+  interests?: string;
+  languages?: string;
+  favoriteSubjects?: string;
+  extracurriculars?: string;
+  major?: string;
+  minors?: string;
+  internships?: string;
+  workExperience?: string;
+  achievements?: string;
+  certifications?: string;
+  reasonForChange?: string;
+  transferableSkills?: string;
+  desiredWorkEnvironment?: string;
+}
+
+function constructUserBio(formData: FormData): string {
+  let bio = `Age Group: ${formData.ageGroup || "Not specified"}\n`
+  bio += `Education: ${formData.education || "Not specified"}\n`
+  bio += `Work Style Preference: ${formData.workStyle || "Not specified"}\n\n`
+
+  bio += "Skills:\n"
+  bio += formData.skills ? formData.skills + "\n\n" : "Not specified\n\n"
+
+  bio += "Hobbies:\n"
+  bio += formData.hobbies ? formData.hobbies + "\n\n" : "Not specified\n\n"
+
+  bio += "Interests:\n"
+  bio += formData.interests ? formData.interests + "\n\n" : "Not specified\n\n"
+
+  bio += "Languages:\n"
+  bio += formData.languages ? formData.languages + "\n\n" : "Not specified\n\n"
+
+  bio += "Favorite Subjects:\n"
+  bio += formData.favoriteSubjects ? formData.favoriteSubjects + "\n\n" : "Not specified\n\n"
+
+  bio += "Extracurricular Activities:\n"
+  bio += formData.extracurriculars ? formData.extracurriculars + "\n\n" : "Not specified\n\n"
+
+  bio += "Major:\n"
+  bio += formData.major ? formData.major + "\n\n" : "Not specified\n\n"
+
+  bio += "Minors:\n"
+  bio += formData.minors ? formData.minors + "\n\n" : "Not specified\n\n"
+
+  bio += "Internships:\n"
+  bio += formData.internships ? formData.internships + "\n\n" : "Not specified\n\n"
+
+  if (["earlyCareer", "midCareer", "lateCareer"].includes(formData.ageGroup || "")) {
+    bio += "Work Experience:\n"
+    bio += formData.workExperience ? formData.workExperience + "\n\n" : "Not specified\n\n"
+
+    bio += "Professional Achievements:\n"
+    bio += formData.achievements ? formData.achievements + "\n\n" : "Not specified\n\n"
+
+    bio += "Certifications/Specialized Training:\n"
+    bio += formData.certifications ? formData.certifications + "\n\n" : "Not specified\n\n"
+  }
+
+  if (formData.ageGroup === "careerChange") {
+    bio += "Reason for Career Change:\n"
+    bio += formData.reasonForChange ? formData.reasonForChange + "\n\n" : "Not specified\n\n"
+
+    bio += "Transferable Skills:\n"
+    bio += formData.transferableSkills ? formData.transferableSkills + "\n\n" : "Not specified\n\n"
+
+    bio += "Desired Work Environment:\n"
+    bio += formData.desiredWorkEnvironment ? formData.desiredWorkEnvironment + "\n\n" : "Not specified\n\n"
+  }
+
+  return bio
 }
 

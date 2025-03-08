@@ -82,15 +82,15 @@ export default function Footer() {
             <h3 className="text-lg font-semibold">Contact Us</h3>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Mail className="h-4 w-4" />
-              <span>info@professionpredictor.com</span>
+              <span>khnshariq92213@gmail.com</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Phone className="h-4 w-4" />
-              <span>+1 (555) 123-4567</span>
+              <span>+91 72081 79779</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>123 AI Street, Tech City, TC 12345</span>
+              <span>Mumbai, India - 400612</span>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
   Sparkles,
@@ -28,6 +28,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ProjectUrlInput } from "@/components/project-url-input"
+import { CareerDetailCard } from "@/components/career-detail-card"
+import type { FormData, Question, CareerResult } from "@/types/form"
 
 // Define age groups
 const AGE_GROUPS = [
@@ -50,7 +53,7 @@ export default function Home() {
   // Form state
   const [currentStep, setCurrentStep] = useState(0)
   const [ageGroup, setAgeGroup] = useState<string>("")
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     // Common fields
     ageGroup: "",
     education: "",
@@ -58,6 +61,7 @@ export default function Home() {
     skills: "",
     interests: "",
     workStyle: "",
+    projectUrl: "",
 
     // Student specific
     favoriteSubjects: "",
@@ -80,11 +84,7 @@ export default function Home() {
     desiredWorkEnvironment: "",
   })
 
-  const [result, setResult] = useState<{
-    iq: number
-    professions: string[]
-    details: { title: string; match: number; description: string }[]
-  } | null>(null)
+  const [result, setResult] = useState<CareerResult | null>(null)
 
   // Reset form and start over
   const resetForm = () => {
@@ -95,6 +95,7 @@ export default function Home() {
       skills: "",
       interests: "",
       workStyle: "",
+      projectUrl: "",
       favoriteSubjects: "",
       extracurriculars: "",
       major: "",
@@ -115,7 +116,7 @@ export default function Home() {
   }
 
   // Fetch guest predictions count on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchPredictionsCount = async () => {
       if (status === "unauthenticated") {
         try {
@@ -130,10 +131,10 @@ export default function Home() {
       }
     }
     fetchPredictionsCount()
-  })
+  }, [status])
 
   // Handle form field changes
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -148,7 +149,7 @@ export default function Home() {
   }
 
   // Get questions based on age group and current step
-  const getQuestions = () => {
+  const getQuestions = (): Question[] => {
     // Common questions for all age groups
     if (currentStep === 1) {
       return [
@@ -189,6 +190,12 @@ export default function Home() {
           label: "What topics, fields, or activities are you most interested in?",
           type: "textarea",
           placeholder: "E.g., technology, healthcare, arts, science, business, helping others...",
+        },
+        {
+          id: "projectUrl",
+          label: "Portfolio or Project URL (Optional)",
+          type: "url",
+          placeholder: "https://github.com/yourusername/project",
         },
       ]
     }
@@ -320,17 +327,17 @@ export default function Home() {
   }
 
   // Get total number of steps based on age group
-  const getTotalSteps = () => {
+  const getTotalSteps = (): number => {
     return 6 // Age group selection + 5 question steps
   }
 
   // Calculate progress percentage
-  const getProgressPercentage = () => {
+  const getProgressPercentage = (): number => {
     return ((currentStep + 1) / getTotalSteps()) * 100
   }
 
   // Validate current step
-  const validateCurrentStep = () => {
+  const validateCurrentStep = (): boolean => {
     const questions = getQuestions()
 
     // Age group selection
@@ -345,7 +352,10 @@ export default function Home() {
 
     // For other steps, check if required fields are filled
     for (const question of questions) {
-      const value = formData[question.id as keyof typeof formData]
+      // Skip validation for optional fields like projectUrl
+      if (question.id === "projectUrl") continue
+
+      const value = formData[question.id]
       if (!value || value.trim() === "") {
         toast({
           title: "Missing Information",
@@ -405,7 +415,7 @@ export default function Home() {
         throw new Error(errorData.error || "Failed to get career suggestions")
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as CareerResult
       if (!data.iq || !data.professions || !data.details) {
         throw new Error("Invalid response format")
       }
@@ -423,10 +433,11 @@ export default function Home() {
         description: "Your career suggestions are ready!",
       })
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An unexpected error occurred")
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
+      setError(errorMessage)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get career suggestions",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -434,35 +445,8 @@ export default function Home() {
     }
   }
 
-  // Format description text for better readability
-  const formatDescription = (text: string) => {
-    // Replace bullet points with proper HTML
-    let formatted = text
-      .replace(/•\s+/g, "• ")
-      .replace(/\n-\s+/g, "\n• ")
-      .replace(/\n\s*\n/g, "\n\n")
-      .replace(/:\s+/g, ": ")
-
-    // Split by sections
-    const sections = [
-      "Skills Alignment",
-      "Growth Potential",
-      "Work-Life Balance",
-      "Required Skills",
-      "Salary Range",
-      "Career Progression",
-      "Next Steps",
-    ]
-
-    sections.forEach((section) => {
-      formatted = formatted.replace(new RegExp(`${section}:`, "g"), `\n\n**${section}:**`)
-    })
-
-    return formatted
-  }
-
   // Render question based on type
-  const renderQuestion = (question: any) => {
+  const renderQuestion = (question: Question) => {
     switch (question.type) {
       case "textarea":
         return (
@@ -470,7 +454,7 @@ export default function Home() {
             id={question.id}
             placeholder={question.placeholder}
             className="min-h-[120px]"
-            value={formData[question.id as keyof typeof formData] as string}
+            value={formData[question.id]}
             onChange={(e) => handleChange(question.id, e.target.value)}
           />
         )
@@ -480,22 +464,22 @@ export default function Home() {
           <Input
             id={question.id}
             placeholder={question.placeholder}
-            value={formData[question.id as keyof typeof formData] as string}
+            value={formData[question.id]}
             onChange={(e) => handleChange(question.id, e.target.value)}
           />
         )
 
+      case "url":
+        return <ProjectUrlInput value={formData[question.id]} onChange={(value) => handleChange(question.id, value)} />
+
       case "select":
         return (
-          <Select
-            value={formData[question.id as keyof typeof formData] as string}
-            onValueChange={(value) => handleChange(question.id, value)}
-          >
+          <Select value={formData[question.id]} onValueChange={(value) => handleChange(question.id, value)}>
             <SelectTrigger>
               <SelectValue placeholder={`Select your ${question.id}`} />
             </SelectTrigger>
             <SelectContent>
-              {question.options.map((option: any) => (
+              {question.options?.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -608,9 +592,11 @@ export default function Home() {
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 {getQuestions().map((question) => (
                   <div key={question.id} className="space-y-3">
-                    <Label htmlFor={question.id} className="text-base font-medium">
-                      {question.label}
-                    </Label>
+                    {question.type !== "url" && (
+                      <Label htmlFor={question.id} className="text-base font-medium">
+                        {question.label}
+                      </Label>
+                    )}
                     {renderQuestion(question)}
                   </div>
                 ))}
@@ -691,32 +677,12 @@ export default function Home() {
                   <TabsContent value="details">
                     <div className="space-y-4">
                       {result.details?.map((detail, index) => (
-                        <Card key={index}>
-                          <CardHeader>
-                            <div className="flex justify-between items-center">
-                              <CardTitle>{detail.title}</CardTitle>
-                              <Badge variant="secondary">Match: {detail.match}%</Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="prose prose-sm max-w-none">
-                              {formatDescription(detail.description)
-                                .split("\n\n")
-                                .map((paragraph, i) => (
-                                  <p key={i} className="mb-2">
-                                    {paragraph.startsWith("**") ? (
-                                      <>
-                                        <strong>{paragraph.substring(2, paragraph.indexOf(":**"))}</strong>
-                                        {paragraph.substring(paragraph.indexOf(":**") + 3)}
-                                      </>
-                                    ) : (
-                                      paragraph
-                                    )}
-                                  </p>
-                                ))}
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <CareerDetailCard
+                          key={index}
+                          title={detail.title}
+                          match={detail.match}
+                          description={detail.description}
+                        />
                       ))}
                     </div>
                   </TabsContent>

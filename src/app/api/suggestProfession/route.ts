@@ -3,15 +3,83 @@ import { cookies } from "next/headers"
 import { dbConnect } from "@/lib/dbConnect"
 import GuestModel from "@/models/Guest.models"
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import type { FormData } from "@/types/form"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
 // Maximum number of predictions allowed for guest users
 const MAX_GUEST_PREDICTIONS = 3
 
+function constructUserBio(formData: FormData): string {
+  let bio = `Age Group: ${formData.ageGroup || "Not specified"}\n`
+  bio += `Education: ${formData.education || "Not specified"}\n`
+  bio += `Work Style Preference: ${formData.workStyle || "Not specified"}\n\n`
+
+  // Add project URL if provided
+  if (formData.projectUrl) {
+    bio += `Portfolio/Project URL: ${formData.projectUrl}\n\n`
+  }
+
+  bio += "Skills:\n"
+  bio += formData.skills ? formData.skills + "\n\n" : "Not specified\n\n"
+
+  bio += "Hobbies:\n"
+  bio += formData.hobbies ? formData.hobbies + "\n\n" : "Not specified\n\n"
+
+  bio += "Interests:\n"
+  bio += formData.interests ? formData.interests + "\n\n" : "Not specified\n\n"
+
+  bio += "Languages Known:\n"
+  bio += formData.languages ? formData.languages + "\n\n" : "Not specified\n\n"
+
+  // Add age-group specific information
+  if (formData.ageGroup === "student") {
+    bio += "Favorite Subjects:\n"
+    bio += formData.favoriteSubjects ? formData.favoriteSubjects + "\n\n" : "Not specified\n\n"
+
+    bio += "Extracurricular Activities:\n"
+    bio += formData.extracurriculars ? formData.extracurriculars + "\n\n" : "Not specified\n\n"
+  }
+
+  if (formData.ageGroup === "college") {
+    bio += "Major:\n"
+    bio += formData.major ? formData.major + "\n\n" : "Not specified\n\n"
+
+    bio += "Minors/Secondary Fields:\n"
+    bio += formData.minors ? formData.minors + "\n\n" : "Not specified\n\n"
+
+    bio += "Internships/Work Experience:\n"
+    bio += formData.internships ? formData.internships + "\n\n" : "Not specified\n\n"
+  }
+
+  if (["earlyCareer", "midCareer", "lateCareer"].includes(formData.ageGroup)) {
+    bio += "Work Experience:\n"
+    bio += formData.workExperience ? formData.workExperience + "\n\n" : "Not specified\n\n"
+
+    bio += "Professional Achievements:\n"
+    bio += formData.achievements ? formData.achievements + "\n\n" : "Not specified\n\n"
+
+    bio += "Certifications/Specialized Training:\n"
+    bio += formData.certifications ? formData.certifications + "\n\n" : "Not specified\n\n"
+  }
+
+  if (formData.ageGroup === "careerChange") {
+    bio += "Reason for Career Change:\n"
+    bio += formData.reasonForChange ? formData.reasonForChange + "\n\n" : "Not specified\n\n"
+
+    bio += "Transferable Skills:\n"
+    bio += formData.transferableSkills ? formData.transferableSkills + "\n\n" : "Not specified\n\n"
+
+    bio += "Desired Work Environment:\n"
+    bio += formData.desiredWorkEnvironment ? formData.desiredWorkEnvironment + "\n\n" : "Not specified\n\n"
+  }
+
+  return bio
+}
+
 export async function POST(req: Request) {
   try {
-    const formData = await req.json()
+    const formData = (await req.json()) as FormData
 
     // Check guest user prediction limit
     const cookieStore = await cookies()
@@ -53,47 +121,28 @@ export async function POST(req: Request) {
     const prompt = `As a career counselor AI, analyze the following personal profile to provide comprehensive and detailed career guidance:
 
 IMPORTANT REQUIREMENTS:
-- You MUST suggest EXACTLY 5 unique and distinct career paths that are well-suited to the profile
-- Each career suggestion must be detailed and specific (not general categories)
+- Suggest EXACTLY 5 unique and distinct career paths that match the profile
+- Each career must be specific (not general categories)
 - Each career must have a unique match percentage between 70-98%
-- Provide simple, clear analysis for each career without using special characters or formatting
-- For the Next Steps section, provide 3 clear action items for each career path
-- Ensure all information is tailored to the individual's profile
-- Use simple language and clear sentences
-- Base your analysis on real-world career paths and requirements
-- Consider the person's age group and life stage in your recommendations
+- Use clear, simple language without special characters or formatting
+- If a project/portfolio URL is provided, analyze it for additional insights
+- Consider the person's age group and life stage
+- Provide practical, actionable next steps
+
+For each career suggestion, include:
+1. Title and match percentage
+2. Skills Alignment: Current relevant skills
+3. Growth Potential: Industry outlook and opportunities
+4. Work-Life Balance: Schedule and environment fit
+5. Required Skills: Skills to develop
+6. Salary Range: Expected compensation
+7. Career Progression: Clear 5-10 year path
 
 Personal Profile:
 ${userBio}
 
-Your response MUST follow this exact structure:
-
-1. IQ ESTIMATE:
-   Provide an estimated IQ range (a specific number between 100-140) with a brief explanation.
-
-2. CAREER RECOMMENDATIONS:
-   List exactly 5 specific career paths that match their profile.
-
-3. DETAILED ANALYSIS:
-   For each career, provide:
-   Title: [Specific job title]
-   Match: [Percentage between 70-98%]
-   Skills Alignment: List their relevant skills for this career
-   Growth Potential: Simple description of industry trends and opportunities
-   Work-Life Balance: How this career fits their preferred work style
-   Required Skills: List of skills they need to develop
-   Salary Range: Expected compensation range
-   Career Progression: Clear 5-10 year career path
-
-4. NEXT STEPS:
-   For each career, list 3 clear action items they should take, such as:
-   - Specific courses or certifications
-   - Networking opportunities
-   - Portfolio projects
-   - Target companies
-   - Mentorship opportunities
-
-Remember: Keep the language simple and clear. Avoid special characters or complex formatting.`
+Format the response as clear text without special characters or markdown formatting.
+Keep descriptions concise and actionable.`
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -198,84 +247,5 @@ Remember: Keep the language simple and clear. Avoid special characters or comple
     console.error("API Error:", error)
     return NextResponse.json({ error: "Failed to process request" }, { status: 500 })
   }
-}
-
-// Helper function to construct a structured biography from form data
-interface FormData {
-  ageGroup?: string;
-  education?: string;
-  workStyle?: string;
-  skills?: string;
-  hobbies?: string;
-  interests?: string;
-  languages?: string;
-  favoriteSubjects?: string;
-  extracurriculars?: string;
-  major?: string;
-  minors?: string;
-  internships?: string;
-  workExperience?: string;
-  achievements?: string;
-  certifications?: string;
-  reasonForChange?: string;
-  transferableSkills?: string;
-  desiredWorkEnvironment?: string;
-}
-
-function constructUserBio(formData: FormData): string {
-  let bio = `Age Group: ${formData.ageGroup || "Not specified"}\n`
-  bio += `Education: ${formData.education || "Not specified"}\n`
-  bio += `Work Style Preference: ${formData.workStyle || "Not specified"}\n\n`
-
-  bio += "Skills:\n"
-  bio += formData.skills ? formData.skills + "\n\n" : "Not specified\n\n"
-
-  bio += "Hobbies:\n"
-  bio += formData.hobbies ? formData.hobbies + "\n\n" : "Not specified\n\n"
-
-  bio += "Interests:\n"
-  bio += formData.interests ? formData.interests + "\n\n" : "Not specified\n\n"
-
-  bio += "Languages:\n"
-  bio += formData.languages ? formData.languages + "\n\n" : "Not specified\n\n"
-
-  bio += "Favorite Subjects:\n"
-  bio += formData.favoriteSubjects ? formData.favoriteSubjects + "\n\n" : "Not specified\n\n"
-
-  bio += "Extracurricular Activities:\n"
-  bio += formData.extracurriculars ? formData.extracurriculars + "\n\n" : "Not specified\n\n"
-
-  bio += "Major:\n"
-  bio += formData.major ? formData.major + "\n\n" : "Not specified\n\n"
-
-  bio += "Minors:\n"
-  bio += formData.minors ? formData.minors + "\n\n" : "Not specified\n\n"
-
-  bio += "Internships:\n"
-  bio += formData.internships ? formData.internships + "\n\n" : "Not specified\n\n"
-
-  if (["earlyCareer", "midCareer", "lateCareer"].includes(formData.ageGroup || "")) {
-    bio += "Work Experience:\n"
-    bio += formData.workExperience ? formData.workExperience + "\n\n" : "Not specified\n\n"
-
-    bio += "Professional Achievements:\n"
-    bio += formData.achievements ? formData.achievements + "\n\n" : "Not specified\n\n"
-
-    bio += "Certifications/Specialized Training:\n"
-    bio += formData.certifications ? formData.certifications + "\n\n" : "Not specified\n\n"
-  }
-
-  if (formData.ageGroup === "careerChange") {
-    bio += "Reason for Career Change:\n"
-    bio += formData.reasonForChange ? formData.reasonForChange + "\n\n" : "Not specified\n\n"
-
-    bio += "Transferable Skills:\n"
-    bio += formData.transferableSkills ? formData.transferableSkills + "\n\n" : "Not specified\n\n"
-
-    bio += "Desired Work Environment:\n"
-    bio += formData.desiredWorkEnvironment ? formData.desiredWorkEnvironment + "\n\n" : "Not specified\n\n"
-  }
-
-  return bio
 }
 

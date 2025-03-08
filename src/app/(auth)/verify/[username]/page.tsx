@@ -29,7 +29,7 @@ const VerifyAccount = () => {
         title: "Success",
         description: response.data.message,
       })
-      router.replace("/signIn")
+      router.replace("/")
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>
       toast({

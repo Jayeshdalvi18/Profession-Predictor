@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { verifySchema } from "@/schemas/verifySchema"
 import type { ApiResponse } from "@/types/ApiResponse"
@@ -11,17 +12,25 @@ import type * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
+import { Loader2 } from "lucide-react"
 
 const VerifyAccount = () => {
   const router = useRouter()
   const params = useParams<{ username: string }>()
   const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const form = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
+    defaultValues: {
+      verifyCode: "",
+    },
   })
+
   const onSubmit = async (data: z.infer<typeof verifySchema>) => {
+    setIsSubmitting(true)
     try {
-      const response = await axios.post(`/api/verifyCode`, {
+      const response = await axios.post<ApiResponse>(`/api/verifyCode`, {
         username: params.username,
         code: data.verifyCode,
       })
@@ -29,16 +38,19 @@ const VerifyAccount = () => {
         title: "Success",
         description: response.data.message,
       })
-      router.replace("/")
+      router.replace("/signIn")
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>
       toast({
         title: "Verification failed",
-        description: axiosError.response?.data.message,
+        description: axiosError.response?.data.message || "An error occurred during verification",
         variant: "destructive",
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-primary/5 to-background">
       <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-lg">
@@ -77,8 +89,15 @@ const VerifyAccount = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              Submit
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "Verify Account"
+              )}
             </Button>
           </form>
         </Form>

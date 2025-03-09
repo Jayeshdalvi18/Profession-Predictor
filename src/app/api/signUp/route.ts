@@ -1,8 +1,15 @@
-// Import necessary modules and models
 import { dbConnect, dbDisconnect } from "@/lib/dbConnect"
 import UserModel from "@/models/User.models"
 import bcrypt from "bcryptjs"
 import { sendVerificationEmail } from "@/utils/sendVerificationEmail"
+import { z } from "zod"
+
+// Define a schema for input validation
+const SignUpSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+})
 
 // Define the POST request handler for user registration
 export async function POST(request: Request) {
@@ -10,8 +17,22 @@ export async function POST(request: Request) {
   await dbConnect()
 
   try {
-    // Extract user registration data (username, email, password) from the request body
-    const { username, email, password } = await request.json()
+    // Extract and validate user registration data
+    const body = await request.json()
+    const validatedData = SignUpSchema.safeParse(body)
+
+    if (!validatedData.success) {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid input data",
+          errors: validatedData.error.errors,
+        },
+        { status: 400 },
+      )
+    }
+
+    const { username, email, password } = validatedData.data
 
     // Check if a verified user with the same username already exists in the database
     const existingUserVerifiedByUsername = await UserModel.findOne({
@@ -49,8 +70,16 @@ export async function POST(request: Request) {
         // Send a new verification email
         const emailResponse = await sendVerificationEmail(email, username, verifyCode)
         if (!emailResponse.success) {
-          return Response.json({ success: false, message: emailResponse.message }, { status: 500 })
+          return Response.json(
+            { success: false, message: emailResponse.message || "Failed to send verification email" },
+            { status: 500 },
+          )
         }
+
+        return Response.json(
+          { success: true, message: "User updated successfully, please verify your email" },
+          { status: 200 },
+        )
       }
     } else {
       // If no existing user is found, create a new user
@@ -94,8 +123,14 @@ export async function POST(request: Request) {
     )
   } catch (error) {
     // If any error occurs during the process, log it and return an error response
-    console.error("Error registering user", error)
-    return Response.json({ success: false, message: "Error registering user" }, { status: 500 })
+    console.error("Error registering user:", error)
+    return Response.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Error registering user",
+      },
+      { status: 500 },
+    )
   } finally {
     // Always disconnect from the database
     await dbDisconnect()

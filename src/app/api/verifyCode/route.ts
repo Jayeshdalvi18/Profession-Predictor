@@ -20,8 +20,20 @@ export async function POST(request: Request) {
   try {
     // Parse and validate the request body
     const body = await request.json()
-    const validatedData = VerificationSchema.parse(body)
-    const { username, code } = validatedData
+    const validationResult = VerificationSchema.safeParse(body)
+
+    if (!validationResult.success) {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid input",
+          errors: validationResult.error.errors,
+        },
+        { status: 400 },
+      )
+    }
+
+    const { username, code } = validationResult.data
 
     // Decode the username (in case it was URL-encoded)
     const decodedUsername = decodeURIComponent(username)
@@ -55,7 +67,13 @@ export async function POST(request: Request) {
       return Response.json({ success: false, message: "Invalid input", errors: error.errors }, { status: 400 })
     }
 
-    return Response.json({ success: false, message: "Error in verifying user" }, { status: 500 })
+    return Response.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Error in verifying user",
+      },
+      { status: 500 },
+    )
   } finally {
     // Always disconnect from the database
     await dbDisconnect()

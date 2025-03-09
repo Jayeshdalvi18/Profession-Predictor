@@ -120,7 +120,7 @@ export default function Home() {
     const fetchPredictionsCount = async () => {
       if (status === "unauthenticated") {
         try {
-          const response = await fetch("/api/predictions-count")
+          const response = await fetch("/api/guest/predictions-count")
           if (response.ok) {
             const data = await response.json()
             setPredictionsCount(data.count)
@@ -172,7 +172,7 @@ export default function Home() {
           id: "hobbies",
           label: "What are your hobbies and activities you enjoy in your free time?",
           type: "textarea",
-          placeholder: "E.g., reading, playing guitar, hiking, coding, cooking...",
+          placeholder: "E.g., reading, playing guitar, hiking, coding, cooking, sports, art, travel...",
         },
       ]
     }
@@ -183,13 +183,13 @@ export default function Home() {
           id: "skills",
           label: "What skills do you possess? Include both technical and soft skills.",
           type: "textarea",
-          placeholder: "E.g., programming in Python, public speaking, problem-solving, leadership...",
+          placeholder: "E.g., programming in Python, public speaking, problem-solving, leadership, design, writing...",
         },
         {
           id: "interests",
           label: "What topics, fields, or activities are you most interested in?",
           type: "textarea",
-          placeholder: "E.g., technology, healthcare, arts, science, business, helping others...",
+          placeholder: "E.g., technology, healthcare, arts, science, business, helping others, environment...",
         },
         {
           id: "projectUrl",
@@ -201,20 +201,35 @@ export default function Home() {
     }
 
     if (currentStep === 3) {
+      const workStyleOptions = [
+        { value: "remote", label: "Remote Work" },
+        { value: "office", label: "Office-Based" },
+        { value: "hybrid", label: "Hybrid" },
+        { value: "flexible", label: "Flexible Hours" },
+        { value: "structured", label: "Structured Environment" },
+        { value: "collaborative", label: "Team-Based/Collaborative" },
+        { value: "independent", label: "Independent/Self-Directed" },
+      ]
+
+      // Add age-specific work style options
+      if (ageGroup === "student" || ageGroup === "college") {
+        workStyleOptions.push(
+          { value: "internship", label: "Internship/Part-time" },
+          { value: "projectBased", label: "Project-Based Work" },
+        )
+      } else if (ageGroup === "careerChange") {
+        workStyleOptions.push(
+          { value: "mentorship", label: "Mentorship Opportunities" },
+          { value: "retraining", label: "Retraining Programs" },
+        )
+      }
+
       return [
         {
           id: "workStyle",
           label: "How do you prefer to work?",
           type: "select",
-          options: [
-            { value: "remote", label: "Remote Work" },
-            { value: "office", label: "Office-Based" },
-            { value: "hybrid", label: "Hybrid" },
-            { value: "flexible", label: "Flexible Hours" },
-            { value: "structured", label: "Structured Environment" },
-            { value: "collaborative", label: "Team-Based/Collaborative" },
-            { value: "independent", label: "Independent/Self-Directed" },
-          ],
+          options: workStyleOptions,
         },
       ]
     }
@@ -228,13 +243,19 @@ export default function Home() {
               id: "favoriteSubjects",
               label: "What are your favorite subjects in school?",
               type: "textarea",
-              placeholder: "E.g., mathematics, biology, literature, art, computer science...",
+              placeholder: "E.g., mathematics, biology, literature, art, computer science, history, physics...",
             },
             {
               id: "extracurriculars",
               label: "What extracurricular activities are you involved in?",
               type: "textarea",
-              placeholder: "E.g., sports teams, clubs, volunteer work, student government...",
+              placeholder: "E.g., sports teams, clubs, volunteer work, student government, music, debate...",
+            },
+            {
+              id: "careerGoals",
+              label: "What are your early career goals or aspirations?",
+              type: "textarea",
+              placeholder: "E.g., college plans, fields you're curious about, dream jobs, impact you want to make...",
             },
           ]
 
@@ -244,13 +265,13 @@ export default function Home() {
               id: "major",
               label: "What is your major or field of study?",
               type: "input",
-              placeholder: "E.g., Computer Science, Business, Psychology...",
+              placeholder: "E.g., Computer Science, Business, Psychology, Engineering, Arts...",
             },
             {
               id: "minors",
               label: "Do you have any minors or secondary fields of study?",
               type: "input",
-              placeholder: "E.g., Mathematics, Economics, Art...",
+              placeholder: "E.g., Mathematics, Economics, Art, Communication, Data Science...",
             },
             {
               id: "internships",
@@ -258,11 +279,15 @@ export default function Home() {
               type: "textarea",
               placeholder: "Describe any internships, part-time jobs, or relevant experiences...",
             },
+            {
+              id: "academicInterests",
+              label: "What specific topics within your field interest you the most?",
+              type: "textarea",
+              placeholder: "E.g., specific research areas, technologies, theories, or applications...",
+            },
           ]
 
         case "earlyCareer":
-        case "midCareer":
-        case "lateCareer":
           return [
             {
               id: "workExperience",
@@ -282,6 +307,68 @@ export default function Home() {
               type: "textarea",
               placeholder: "List any certifications, courses, or specialized training you've completed...",
             },
+            {
+              id: "careerAspirations",
+              label: "Where do you see your career heading in the next 5 years?",
+              type: "textarea",
+              placeholder: "E.g., leadership roles, specialization, industry change, skill development...",
+            },
+          ]
+
+        case "midCareer":
+          return [
+            {
+              id: "workExperience",
+              label: "Summarize your career journey and current role",
+              type: "textarea",
+              placeholder: "Include key roles, industries, and areas of expertise developed over your career...",
+            },
+            {
+              id: "achievements",
+              label: "What are your most significant professional accomplishments?",
+              type: "textarea",
+              placeholder: "Major projects, leadership roles, innovations, or business impact...",
+            },
+            {
+              id: "certifications",
+              label: "What specialized knowledge or credentials have you acquired?",
+              type: "textarea",
+              placeholder: "Advanced certifications, specialized training, or expertise areas...",
+            },
+            {
+              id: "careerChallenges",
+              label: "What career challenges or growth opportunities are you currently facing?",
+              type: "textarea",
+              placeholder: "E.g., skill gaps, industry changes, leadership transitions, work-life balance...",
+            },
+          ]
+
+        case "lateCareer":
+          return [
+            {
+              id: "workExperience",
+              label: "Describe your career journey and areas of expertise",
+              type: "textarea",
+              placeholder: "Include significant roles, industry experience, and specialized knowledge...",
+            },
+            {
+              id: "achievements",
+              label: "What are the major accomplishments that define your career?",
+              type: "textarea",
+              placeholder: "Leadership positions, major projects, mentorship, industry contributions...",
+            },
+            {
+              id: "futureGoals",
+              label: "What are your goals for this stage of your career?",
+              type: "textarea",
+              placeholder: "E.g., knowledge transfer, mentorship, consulting, reduced hours, new challenges...",
+            },
+            {
+              id: "legacyInterests",
+              label: "What aspects of your work or expertise would you like to pass on?",
+              type: "textarea",
+              placeholder: "Skills, knowledge, or values you'd like to share with the next generation...",
+            },
           ]
 
         case "careerChange":
@@ -290,7 +377,8 @@ export default function Home() {
               id: "reasonForChange",
               label: "Why are you considering a career change?",
               type: "textarea",
-              placeholder: "E.g., seeking more fulfillment, better work-life balance, new challenges...",
+              placeholder:
+                "E.g., seeking more fulfillment, better work-life balance, new challenges, industry shifts...",
             },
             {
               id: "transferableSkills",
@@ -304,6 +392,23 @@ export default function Home() {
               type: "textarea",
               placeholder: "Describe your ideal workplace culture, values, and environment...",
             },
+            {
+              id: "newFieldInterests",
+              label: "What fields or industries are you most interested in exploring?",
+              type: "textarea",
+              placeholder: "Areas you're curious about or have been researching for your career change...",
+            },
+            {
+              id: "retrainingWillingness",
+              label: "How open are you to additional education or training?",
+              type: "select",
+              options: [
+                { value: "veryOpen", label: "Very open - willing to pursue degrees or certifications" },
+                { value: "somewhatOpen", label: "Somewhat open - prefer shorter courses or on-the-job training" },
+                { value: "minimalTraining", label: "Prefer minimal training - want to leverage existing skills" },
+                { value: "undecided", label: "Undecided - depends on the field and requirements" },
+              ],
+            },
           ]
 
         default:
@@ -313,7 +418,7 @@ export default function Home() {
 
     // Final step for all age groups
     if (currentStep === 5) {
-      return [
+      const finalQuestions: Question[] = [
         {
           id: "languages",
           label: "What languages do you speak?",
@@ -321,6 +426,34 @@ export default function Home() {
           placeholder: "E.g., English (native), Spanish (intermediate), French (basic)...",
         },
       ]
+
+      // Add age-specific final questions
+      if (ageGroup === "student" || ageGroup === "college") {
+        finalQuestions.push({
+          id: "mentorshipInterest",
+          label: "Are you interested in finding mentors in your field of interest?",
+          type: "select",
+          options: [
+            { value: "veryInterested", label: "Very interested" },
+            { value: "somewhatInterested", label: "Somewhat interested" },
+            { value: "notInterested", label: "Not interested" },
+          ],
+        })
+      } else if (["earlyCareer", "midCareer", "lateCareer"].includes(ageGroup)) {
+        finalQuestions.push({
+          id: "workLifeBalance",
+          label: "How important is work-life balance in your career decisions?",
+          type: "select",
+          options: [
+            { value: "veryImportant", label: "Very important - a top priority" },
+            { value: "important", label: "Important but can be flexible" },
+            { value: "neutral", label: "Neutral - depends on the opportunity" },
+            { value: "lessImportant", label: "Less important than career advancement" },
+          ],
+        })
+      }
+
+      return finalQuestions
     }
 
     return []
@@ -470,7 +603,7 @@ export default function Home() {
         )
 
       case "url":
-        return <ProjectUrlInput value={formData[question.id]} onChange={(value) => handleChange(question.id, value)} />
+        return <ProjectUrlInput value={formData[question.id] || ""} onChange={(value) => handleChange(question.id, value)} />
 
       case "select":
         return (

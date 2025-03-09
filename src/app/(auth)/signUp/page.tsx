@@ -14,13 +14,14 @@ import type { ApiResponse } from "@/types/ApiResponse"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 const SignUp = () => {
   const [usernameValue, setUsernameValue] = useState("")
   const [usernameMessage, setUsernameMessage] = useState("")
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const debouncedSetUsername = useDebounceCallback(setUsernameValue, 300)
   const { toast } = useToast()
   const router = useRouter()
@@ -36,11 +37,13 @@ const SignUp = () => {
         setIsCheckingUsername(true)
         setUsernameMessage("")
         try {
-          const response = await axios.get<ApiResponse>(`/api/checkUsernameUnique?username=${usernameValue}`)
+          const response = await axios.get<ApiResponse>(
+            `/api/checkUsernameUnique?username=${encodeURIComponent(usernameValue)}`,
+          )
           setUsernameMessage(response.data.message)
         } catch (error) {
           const axiosError = error as AxiosError<ApiResponse>
-          setUsernameMessage(axiosError.response?.data.message || "")
+          setUsernameMessage(axiosError.response?.data.message || "Error checking username")
         } finally {
           setIsCheckingUsername(false)
         }
@@ -54,12 +57,12 @@ const SignUp = () => {
     try {
       const response = await axios.post<ApiResponse>("/api/signUp", data)
       toast({ title: "Success", description: response.data.message })
-      router.replace(`/verify/${data.username}`)
+      router.replace(`/verify/${encodeURIComponent(data.username)}`)
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>
       toast({
         title: "Sign Up Failed",
-        description: axiosError.response?.data.message,
+        description: axiosError.response?.data.message || "An error occurred during sign up",
         variant: "destructive",
       })
     } finally {
@@ -127,7 +130,21 @@ const SignUp = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter a password" type="password" {...field} />
+                    <div className="relative">
+                      <Input
+                        placeholder="Enter a password"
+                        type={showPassword ? "text" : "password"}
+                        className="pr-10"
+                        {...field}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

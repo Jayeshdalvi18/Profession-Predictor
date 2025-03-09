@@ -46,21 +46,26 @@ const SignIn = () => {
         router.push("/")
       }
     } catch (error) {
-      toast({ title: "Sign In Failed", description: String(error), variant: "destructive" })
+      toast({
+        title: "Sign In Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleProviderSignIn = (provider: string) => {
+  const handleProviderSignIn = (provider: "google" | "github") => {
     signIn(provider, { callbackUrl: "/" })
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-black">
-      <div className="w-full max-w-md p-8 space-y-6 bg-zinc-900 rounded-lg">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold text-white">Welcome back</h1>
+          <h1 className="text-2xl font-semibold">Welcome back</h1>
+          <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
         </div>
 
         <Form {...form}>
@@ -70,9 +75,9 @@ const SignIn = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-zinc-400">Email</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="m@example.com" className="bg-zinc-800 border-zinc-700 text-white" {...field} />
+                    <Input placeholder="m@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -85,8 +90,8 @@ const SignIn = () => {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel className="text-zinc-400">Password</FormLabel>
-                    <Link href="/forgot-password" className="text-sm text-zinc-400 hover:text-white">
+                    <FormLabel>Password</FormLabel>
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                       Forgot password?
                     </Link>
                   </div>
@@ -95,13 +100,13 @@ const SignIn = () => {
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="bg-zinc-800 border-zinc-700 text-white pr-10"
+                        className="pr-10"
                         {...field}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -112,7 +117,7 @@ const SignIn = () => {
               )}
             />
 
-            <Button type="submit" disabled={isSubmitting} className="w-full bg-white hover:bg-zinc-200 text-black">
+            <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...
@@ -126,34 +131,26 @@ const SignIn = () => {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full border-zinc-800" />
+            <Separator className="w-full" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-zinc-900 px-2 text-zinc-400">Or continue with</span>
+            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="w-full bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
-            onClick={() => handleProviderSignIn("google")}
-          >
+          <Button variant="outline" className="w-full" onClick={() => handleProviderSignIn("google")}>
             <FcGoogle className="h-5 w-5 mr-2" /> Google
           </Button>
-          <Button
-            variant="outline"
-            className="w-full bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
-            onClick={() => handleProviderSignIn("github")}
-          >
+          <Button variant="outline" className="w-full" onClick={() => handleProviderSignIn("github")}>
             <FaGithub className="h-5 w-5 mr-2" /> GitHub
           </Button>
         </div>
 
         <div className="text-center">
-          <p className="text-zinc-400">
+          <p className="text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/signUp" className="text-white hover:underline">
+            <Link href="/signUp" className="text-primary hover:underline">
               Sign up
             </Link>
           </p>

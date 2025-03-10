@@ -4,18 +4,54 @@ import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { useState } from "react"
-import { Menu, Home, Info, Mail, LogIn, LogOut, User as UserIcon } from "lucide-react"
-import { User } from "next-auth"
+import { useState, useEffect } from "react"
+import { Menu, Home, Info, Mail, LogIn, LogOut, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+
+interface NavbarUser {
+  username?: string
+  email?: string
+  isGuest?: boolean
+}
 
 const Navbar = () => {
-  const { data: session } = useSession()
-  const user: User = session?.user as User
+  const { data: session, status } = useSession()
+  const user: NavbarUser = session?.user as NavbarUser
   const [isOpen, setIsOpen] = useState(false)
+  const [isGuest, setIsGuest] = useState(false)
+  const router = useRouter()
 
-  const handleSignOut = () => {
-    signOut()
+  // Check for guest cookie if not authenticated via NextAuth
+  useEffect(() => {
+    const checkGuestStatus = async () => {
+      if (status === "unauthenticated") {
+        try {
+          const response = await fetch("/api/guest-check")
+          if (response.ok) {
+            const data = await response.json()
+            setIsGuest(data.isGuest)
+          }
+        } catch (error) {
+          console.error("Error checking guest status:", error)
+        }
+      }
+    }
+
+    checkGuestStatus()
+  }, [status])
+
+  const handleSignOut = async () => {
+    if (isGuest) {
+      // Clear guest cookie
+      await fetch("/api/guest-logout", { method: "POST" })
+      setIsGuest(false)
+    } else {
+      // Sign out from NextAuth
+      await signOut({ redirect: false })
+    }
+
     setIsOpen(false)
+    router.push("/signIn")
   }
 
   const menuItems = [
@@ -42,9 +78,11 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
-          {session ? (
+          {session || isGuest ? (
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Welcome, {user?.username || user?.email}</span>
+              <span className="text-sm text-muted-foreground">
+                {isGuest ? "Guest User" : `Welcome, ${user?.username || user?.email}`}
+              </span>
               <Button onClick={handleSignOut}>Log Out</Button>
             </div>
           ) : (
@@ -78,11 +116,11 @@ const Navbar = () => {
                   <span>{item.label}</span>
                 </Link>
               ))}
-              {session ? (
+              {session || isGuest ? (
                 <>
                   <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
-                    <UserIcon className="h-5 w-5" />
-                    <span>{user?.username || user?.email}</span>
+                    <User className="h-5 w-5" />
+                    <span>{isGuest ? "Guest User" : user?.username || user?.email}</span>
                   </div>
                   <Button className="w-full" onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />

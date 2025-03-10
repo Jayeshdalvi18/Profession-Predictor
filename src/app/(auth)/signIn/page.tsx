@@ -10,15 +10,17 @@ import { useRouter } from "next/navigation"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff, UserRound } from "lucide-react"
 import { FcGoogle } from "react-icons/fc"
 import { FaGithub } from "react-icons/fa"
 import { signinSchema } from "@/schemas/signInSchema"
 import { signIn } from "next-auth/react"
 import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isGuestLoading, setIsGuestLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
@@ -56,106 +58,163 @@ const SignIn = () => {
     }
   }
 
-  const handleProviderSignIn = (provider: "google" | "github") => {
-    signIn(provider, { callbackUrl: "/" })
+  const handleProviderSignIn = async (provider: "google" | "github") => {
+    try {
+      await signIn(provider, { callbackUrl: "/" })
+    } catch (error) {
+      toast({
+        title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Sign In Failed`,
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleGuestLogin = async () => {
+    setIsGuestLoading(true)
+    try {
+      const response = await fetch("/api/guest-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to login as guest")
+      }
+
+      toast({
+        title: "Guest Login Successful",
+        description: "You are now logged in as a guest user",
+      })
+
+      router.push("/")
+    } catch (error) {
+      toast({
+        title: "Guest Login Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGuestLoading(false)
+    }
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
-      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
-        </div>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-primary/5 via-background to-background px-4 py-8">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
+          <CardDescription className="text-center">Sign in to your account to continue</CardDescription>
+        </CardHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="m@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <CardContent className="space-y-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="m@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex justify-between items-center">
-                    <FormLabel>Password</FormLabel>
-                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        className="pr-10"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-between items-center">
+                      <FormLabel>Password</FormLabel>
+                      <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                        Forgot password?
+                      </Link>
                     </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...
-                </>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
+          </Form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Button variant="outline" className="w-full" onClick={() => handleProviderSignIn("google")}>
+              <FcGoogle className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">Google</span>
+            </Button>
+
+            <Button variant="outline" className="w-full" onClick={() => handleProviderSignIn("github")}>
+              <FaGithub className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">GitHub</span>
+            </Button>
+
+            <Button variant="outline" className="w-full" onClick={handleGuestLogin} disabled={isGuestLoading}>
+              {isGuestLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                "Login"
+                <>
+                  <UserRound className="h-5 w-5 mr-2" />
+                  <span className="hidden sm:inline">Guest</span>
+                </>
               )}
             </Button>
-          </form>
-        </Form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+        </CardContent>
+
+        <CardFooter className="flex flex-col space-y-2">
+          <div className="text-center w-full">
+            <p className="text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link href="/signUp" className="text-primary hover:underline font-medium">
+                Sign up
+              </Link>
+            </p>
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="w-full" onClick={() => handleProviderSignIn("google")}>
-            <FcGoogle className="h-5 w-5 mr-2" /> Google
-          </Button>
-          <Button variant="outline" className="w-full" onClick={() => handleProviderSignIn("github")}>
-            <FaGithub className="h-5 w-5 mr-2" /> GitHub
-          </Button>
-        </div>
-
-        <div className="text-center">
-          <p className="text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/signUp" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

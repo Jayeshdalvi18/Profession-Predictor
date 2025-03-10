@@ -13,16 +13,18 @@ export async function POST() {
     await GuestModel.create({
       guestId,
       predictionsCount: 0,
+      createdAt: new Date(),
+      lastActive: new Date(),
     })
 
-    // Set cookie
-    ;(await
-          // Set cookie
-          cookies()).set("guestId", guestId, {
+    // Set cookie properly
+    const cookieStore = await cookies()
+    cookieStore.set("guestId", guestId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 60 * 60 * 1, // 1 hour
+      maxAge: 60 * 60 * 24 * 7, // 7 days instead of 1 hour for better user experience
+      path: "/",
     })
 
     return Response.json({

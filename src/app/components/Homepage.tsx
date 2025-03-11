@@ -151,57 +151,132 @@ export default function Home() {
   // Get questions based on age group and current step
   const getQuestions = (): Question[] => {
     // Common questions for all age groups
+    // For step 1 (education), customize based on age group
     if (currentStep === 1) {
+      // Customize education options based on age group
+      let educationOptions = [
+        { value: "highSchool", label: "High School" },
+        { value: "someCollege", label: "Some College" },
+        { value: "associates", label: "Associate's Degree" },
+        { value: "bachelors", label: "Bachelor's Degree" },
+        { value: "masters", label: "Master's Degree" },
+        { value: "doctorate", label: "Doctorate" },
+        { value: "professional", label: "Professional Degree" },
+        { value: "selfTaught", label: "Self-Taught" },
+      ]
+
+      // Age-specific education options
+      if (ageGroup === "student") {
+        educationOptions = [
+          { value: "middleSchool", label: "Middle School" },
+          { value: "someHighSchool", label: "Some High School" },
+          { value: "highSchool", label: "High School" },
+          { value: "vocational", label: "Vocational Training" },
+          { value: "selfTaught", label: "Self-Taught" },
+        ]
+      } else if (ageGroup === "college") {
+        educationOptions = [
+          { value: "highSchool", label: "High School" },
+          { value: "someCollege", label: "Some College (In Progress)" },
+          { value: "associates", label: "Associate's Degree" },
+          { value: "vocational", label: "Vocational Certificate" },
+          { value: "bachelors", label: "Bachelor's Degree (In Progress)" },
+        ]
+      }
+
+      // Customize hobbies placeholder based on age group
+      let hobbiesPlaceholder = "E.g., reading, playing guitar, hiking, coding, cooking, sports, art, travel..."
+
+      if (ageGroup === "student") {
+        hobbiesPlaceholder = "E.g., video games, sports, social media, music, art, coding, reading, clubs..."
+      } else if (ageGroup === "lateCareer") {
+        hobbiesPlaceholder = "E.g., gardening, travel, reading, volunteering, crafts, cooking, family activities..."
+      } else if (ageGroup === "careerChange") {
+        hobbiesPlaceholder = "E.g., activities that might hint at new career directions or passions..."
+      }
+
       return [
         {
           id: "education",
           label: "What is your highest level of education?",
           type: "select",
-          options: [
-            { value: "highSchool", label: "High School" },
-            { value: "someCollege", label: "Some College" },
-            { value: "associates", label: "Associate's Degree" },
-            { value: "bachelors", label: "Bachelor's Degree" },
-            { value: "masters", label: "Master's Degree" },
-            { value: "doctorate", label: "Doctorate" },
-            { value: "professional", label: "Professional Degree" },
-            { value: "selfTaught", label: "Self-Taught" },
-          ],
+          options: educationOptions,
         },
         {
           id: "hobbies",
           label: "What are your hobbies and activities you enjoy in your free time?",
           type: "textarea",
-          placeholder: "E.g., reading, playing guitar, hiking, coding, cooking, sports, art, travel...",
+          placeholder: hobbiesPlaceholder,
         },
       ]
     }
 
+    // For step 2 (skills and interests), customize based on age group
     if (currentStep === 2) {
+      let skillsLabel = "What skills do you possess? Include both technical and soft skills."
+      let skillsPlaceholder =
+        "E.g., programming in Python, public speaking, problem-solving, leadership, design, writing..."
+      let interestsLabel = "What topics, fields, or activities are you most interested in?"
+      let interestsPlaceholder = "E.g., technology, healthcare, arts, science, business, helping others, environment..."
+
+      if (ageGroup === "student") {
+        skillsLabel = "What skills have you developed in school or through extracurricular activities?"
+        skillsPlaceholder = "E.g., math, writing, public speaking, teamwork, computer skills, organization..."
+        interestsLabel = "What subjects or activities do you find most interesting?"
+        interestsPlaceholder = "E.g., science, computers, art, music, sports, helping others, social media..."
+      } else if (ageGroup === "college") {
+        skillsLabel = "What academic and practical skills have you developed?"
+        skillsPlaceholder = "E.g., research, analysis, programming, lab techniques, presentation skills..."
+        interestsLabel = "What academic subjects or potential career fields interest you most?"
+        interestsPlaceholder = "E.g., specific areas within your major, research topics, industry applications..."
+      } else if (ageGroup === "earlyCareer") {
+        skillsLabel = "What professional and technical skills have you developed so far?"
+        skillsPlaceholder = "E.g., project management, specific software, client relations, technical writing..."
+      } else if (ageGroup === "midCareer") {
+        skillsLabel = "What specialized skills and expertise have you developed in your career?"
+        skillsPlaceholder = "E.g., leadership, strategic planning, mentoring, specialized technical skills..."
+      } else if (ageGroup === "lateCareer") {
+        skillsLabel = "What advanced skills and expertise define your professional capabilities?"
+        skillsPlaceholder = "E.g., executive leadership, strategic vision, mentorship, specialized domain knowledge..."
+      } else if (ageGroup === "careerChange") {
+        skillsLabel = "What transferable skills do you have that could apply to new fields?"
+        skillsPlaceholder = "E.g., project management, communication, analysis, leadership, technical skills..."
+        interestsLabel = "What new fields or industries are you interested in exploring?"
+        interestsPlaceholder = "E.g., emerging industries, fields aligned with your values, growth sectors..."
+      }
+
       return [
         {
           id: "skills",
-          label: "What skills do you possess? Include both technical and soft skills.",
+          label: skillsLabel,
           type: "textarea",
-          placeholder: "E.g., programming in Python, public speaking, problem-solving, leadership, design, writing...",
+          placeholder: skillsPlaceholder,
         },
         {
           id: "interests",
-          label: "What topics, fields, or activities are you most interested in?",
+          label: interestsLabel,
           type: "textarea",
-          placeholder: "E.g., technology, healthcare, arts, science, business, helping others, environment...",
+          placeholder: interestsPlaceholder,
         },
         {
           id: "projectUrl",
-          label: "Portfolio or Project URL (Optional)",
+          label:
+            ageGroup === "student" || ageGroup === "college"
+              ? "Portfolio, Project, or Social Media URL (Optional)"
+              : "Portfolio or Project URL (Optional)",
           type: "url",
-          placeholder: "https://github.com/yourusername/project",
+          placeholder:
+            ageGroup === "student"
+              ? "https://github.com/yourusername/project or social media profile"
+              : "https://github.com/yourusername/project",
         },
       ]
     }
 
+    // For step 3 (work style), enhance the options based on age group
     if (currentStep === 3) {
-      const workStyleOptions = [
+      let workStyleLabel = "How do you prefer to work?"
+      let workStyleOptions = [
         { value: "remote", label: "Remote Work" },
         { value: "office", label: "Office-Based" },
         { value: "hybrid", label: "Hybrid" },
@@ -211,23 +286,64 @@ export default function Home() {
         { value: "independent", label: "Independent/Self-Directed" },
       ]
 
-      // Add age-specific work style options
-      if (ageGroup === "student" || ageGroup === "college") {
-        workStyleOptions.push(
+      // Customize work style options based on age group
+      if (ageGroup === "student") {
+        workStyleLabel = "How do you prefer to learn and work on projects?"
+        workStyleOptions = [
+          { value: "structured", label: "Structured Environment with Clear Guidelines" },
+          { value: "collaborative", label: "Team Projects and Group Work" },
+          { value: "independent", label: "Independent Study and Self-Directed Projects" },
+          { value: "handson", label: "Hands-on, Practical Learning" },
+          { value: "creative", label: "Creative, Open-Ended Assignments" },
+          { value: "internship", label: "Internship/Part-time Work Experience" },
+          { value: "projectBased", label: "Project-Based Learning" },
+        ]
+      } else if (ageGroup === "college") {
+        workStyleLabel = "What type of work or academic environment do you prefer?"
+        workStyleOptions = [
+          { value: "research", label: "Research-Oriented" },
+          { value: "practical", label: "Practical Application" },
+          { value: "collaborative", label: "Collaborative Team Projects" },
+          { value: "independent", label: "Independent Study" },
+          { value: "structured", label: "Structured Environment" },
+          { value: "flexible", label: "Flexible Schedule" },
           { value: "internship", label: "Internship/Part-time" },
           { value: "projectBased", label: "Project-Based Work" },
+        ]
+      } else if (ageGroup === "earlyCareer") {
+        workStyleOptions.push(
+          { value: "fastPaced", label: "Fast-Paced Environment" },
+          { value: "mentored", label: "Mentorship Opportunities" },
+          { value: "growthFocused", label: "Growth-Focused Culture" },
+        )
+      } else if (ageGroup === "midCareer") {
+        workStyleOptions.push(
+          { value: "leadership", label: "Leadership Opportunities" },
+          { value: "strategic", label: "Strategic Decision-Making" },
+          { value: "mentoring", label: "Mentoring Junior Colleagues" },
+        )
+      } else if (ageGroup === "lateCareer") {
+        workStyleLabel = "What type of work arrangement would you prefer at this stage?"
+        workStyleOptions.push(
+          { value: "consulting", label: "Consulting/Advisory Role" },
+          { value: "partTime", label: "Part-Time Arrangement" },
+          { value: "mentoring", label: "Mentoring and Knowledge Transfer" },
+          { value: "legacy", label: "Legacy-Building Projects" },
         )
       } else if (ageGroup === "careerChange") {
+        workStyleLabel = "What type of work environment are you looking for in your new career?"
         workStyleOptions.push(
           { value: "mentorship", label: "Mentorship Opportunities" },
           { value: "retraining", label: "Retraining Programs" },
+          { value: "entryLevel", label: "Entry-Level with Growth Potential" },
+          { value: "supportive", label: "Supportive Learning Environment" },
         )
       }
 
       return [
         {
           id: "workStyle",
-          label: "How do you prefer to work?",
+          label: workStyleLabel,
           type: "select",
           options: workStyleOptions,
         },
@@ -416,7 +532,7 @@ export default function Home() {
       }
     }
 
-    // Final step for all age groups
+    // For step 5 (final questions), add more age-specific questions
     if (currentStep === 5) {
       const finalQuestions: Question[] = [
         {
@@ -428,29 +544,160 @@ export default function Home() {
       ]
 
       // Add age-specific final questions
-      if (ageGroup === "student" || ageGroup === "college") {
-        finalQuestions.push({
-          id: "mentorshipInterest",
-          label: "Are you interested in finding mentors in your field of interest?",
-          type: "select",
-          options: [
-            { value: "veryInterested", label: "Very interested" },
-            { value: "somewhatInterested", label: "Somewhat interested" },
-            { value: "notInterested", label: "Not interested" },
-          ],
-        })
-      } else if (["earlyCareer", "midCareer", "lateCareer"].includes(ageGroup)) {
-        finalQuestions.push({
-          id: "workLifeBalance",
-          label: "How important is work-life balance in your career decisions?",
-          type: "select",
-          options: [
-            { value: "veryImportant", label: "Very important - a top priority" },
-            { value: "important", label: "Important but can be flexible" },
-            { value: "neutral", label: "Neutral - depends on the opportunity" },
-            { value: "lessImportant", label: "Less important than career advancement" },
-          ],
-        })
+      if (ageGroup === "student") {
+        finalQuestions.push(
+          {
+            id: "mentorshipInterest",
+            label: "Are you interested in finding mentors in your field of interest?",
+            type: "select",
+            options: [
+              { value: "veryInterested", label: "Very interested" },
+              { value: "somewhatInterested", label: "Somewhat interested" },
+              { value: "notInterested", label: "Not interested" },
+            ],
+          },
+          {
+            id: "learningStyle",
+            label: "How do you learn best?",
+            type: "select",
+            options: [
+              { value: "visual", label: "Visual (images, diagrams, videos)" },
+              { value: "auditory", label: "Auditory (listening, discussions)" },
+              { value: "reading", label: "Reading/Writing" },
+              { value: "kinesthetic", label: "Hands-on/Practical application" },
+              { value: "mixed", label: "Mixed approach" },
+            ],
+          },
+        )
+      } else if (ageGroup === "college") {
+        finalQuestions.push(
+          {
+            id: "mentorshipInterest",
+            label: "Are you interested in finding mentors in your field of interest?",
+            type: "select",
+            options: [
+              { value: "veryInterested", label: "Very interested" },
+              { value: "somewhatInterested", label: "Somewhat interested" },
+              { value: "notInterested", label: "Not interested" },
+            ],
+          },
+          {
+            id: "graduationPlans",
+            label: "What are your plans after graduation?",
+            type: "select",
+            options: [
+              { value: "immediateWork", label: "Enter workforce immediately" },
+              { value: "gradSchool", label: "Pursue graduate studies" },
+              { value: "entrepreneurship", label: "Start a business/freelance" },
+              { value: "fellowship", label: "Apply for fellowships/research positions" },
+              { value: "undecided", label: "Still exploring options" },
+            ],
+          },
+        )
+      } else if (ageGroup === "earlyCareer") {
+        finalQuestions.push(
+          {
+            id: "workLifeBalance",
+            label: "How important is work-life balance in your career decisions?",
+            type: "select",
+            options: [
+              { value: "veryImportant", label: "Very important - a top priority" },
+              { value: "important", label: "Important but can be flexible" },
+              { value: "neutral", label: "Neutral - depends on the opportunity" },
+              { value: "lessImportant", label: "Less important than career advancement" },
+            ],
+          },
+          {
+            id: "careerGoals",
+            label: "What are your primary career goals right now?",
+            type: "select",
+            options: [
+              { value: "skillDevelopment", label: "Developing specialized skills" },
+              { value: "advancement", label: "Advancing to higher positions" },
+              { value: "stability", label: "Finding stability and security" },
+              { value: "impact", label: "Making a meaningful impact" },
+              { value: "compensation", label: "Increasing compensation" },
+            ],
+          },
+        )
+      } else if (ageGroup === "midCareer") {
+        finalQuestions.push(
+          {
+            id: "workLifeBalance",
+            label: "How important is work-life balance in your career decisions?",
+            type: "select",
+            options: [
+              { value: "veryImportant", label: "Very important - a top priority" },
+              { value: "important", label: "Important but can be flexible" },
+              { value: "neutral", label: "Neutral - depends on the opportunity" },
+              { value: "lessImportant", label: "Less important than career advancement" },
+            ],
+          },
+          {
+            id: "careerDirection",
+            label: "What direction would you like your career to take now?",
+            type: "select",
+            options: [
+              { value: "leadership", label: "Move into leadership/management" },
+              { value: "specialization", label: "Deepen technical/domain expertise" },
+              { value: "entrepreneurship", label: "Explore entrepreneurship opportunities" },
+              { value: "stability", label: "Maintain stability with moderate growth" },
+              { value: "newChallenges", label: "Take on new challenges in current field" },
+            ],
+          },
+        )
+      } else if (ageGroup === "lateCareer") {
+        finalQuestions.push(
+          {
+            id: "workLifeBalance",
+            label: "How important is work-life balance in your career decisions?",
+            type: "select",
+            options: [
+              { value: "veryImportant", label: "Very important - a top priority" },
+              { value: "important", label: "Important but can be flexible" },
+              { value: "neutral", label: "Neutral - depends on the opportunity" },
+              { value: "lessImportant", label: "Less important than career advancement" },
+            ],
+          },
+          {
+            id: "retirementPlans",
+            label: "How are you thinking about retirement and career transition?",
+            type: "select",
+            options: [
+              { value: "activeCareer", label: "Plan to remain fully active in career" },
+              { value: "phaseOut", label: "Gradually phase into retirement" },
+              { value: "consulting", label: "Transition to consulting/advisory roles" },
+              { value: "teaching", label: "Move into teaching/mentoring" },
+              { value: "newVentures", label: "Explore entirely new ventures or interests" },
+            ],
+          },
+        )
+      } else if (ageGroup === "careerChange") {
+        finalQuestions.push(
+          {
+            id: "timeframe",
+            label: "What is your timeframe for making this career change?",
+            type: "select",
+            options: [
+              { value: "immediate", label: "As soon as possible" },
+              { value: "sixMonths", label: "Within 6 months" },
+              { value: "oneYear", label: "Within 1 year" },
+              { value: "twoYears", label: "Within 2 years" },
+              { value: "flexible", label: "Flexible/No specific timeline" },
+            ],
+          },
+          {
+            id: "riskTolerance",
+            label: "How would you describe your tolerance for risk in this career change?",
+            type: "select",
+            options: [
+              { value: "veryLow", label: "Very low - need security and stability" },
+              { value: "moderate", label: "Moderate - some uncertainty is acceptable" },
+              { value: "high", label: "High - willing to take significant risks for the right opportunity" },
+              { value: "variable", label: "Depends on the potential rewards" },
+            ],
+          },
+        )
       }
 
       return finalQuestions

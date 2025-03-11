@@ -13,12 +13,14 @@ export interface FormData {
   extracurriculars: string
   careerGoals?: string
   mentorshipInterest?: string
+  learningStyle?: string
 
   // College specific
   major: string
   minors: string
   internships: string
   academicInterests?: string
+  graduationPlans?: string
 
   // Career specific
   workExperience: string
@@ -28,10 +30,12 @@ export interface FormData {
   careerAspirations?: string
   careerChallenges?: string
   workLifeBalance?: string
+  careerDirection?: string
 
   // Late career specific
   futureGoals?: string
   legacyInterests?: string
+  retirementPlans?: string
 
   // Career change specific
   reasonForChange: string
@@ -39,6 +43,8 @@ export interface FormData {
   desiredWorkEnvironment: string
   newFieldInterests?: string
   retrainingWillingness?: string
+  timeframe?: string
+  riskTolerance?: string
 }
 
 export interface QuestionOption {
@@ -51,7 +57,7 @@ export interface Question {
   label: string
   type: "textarea" | "input" | "select" | "url"
   placeholder?: string
-  options?: { value: string, label: string }[]
+  options?: QuestionOption[]
 }
 
 export interface CareerDetail {

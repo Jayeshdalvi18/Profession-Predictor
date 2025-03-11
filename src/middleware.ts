@@ -34,12 +34,13 @@ export async function middleware(request: NextRequest) {
     if (isNormalUser && pathname === "/signIn") {
       return NextResponse.redirect(new URL("/", request.url))
     }
-  } else {
-    // If user is not logged in (neither NextAuth nor guest), protect the home route
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/signIn", request.url))
-    }
-  }
+  } 
+  // else {
+  //   // If user is not logged in (neither NextAuth nor guest), protect the home route
+  //   if (pathname === "/") {
+  //     return NextResponse.redirect(new URL("/signIn", request.url))
+  //   }
+  // }
 
   return NextResponse.next() // Allow request if none of the conditions matched
 }

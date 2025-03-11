@@ -39,6 +39,18 @@ function constructUserBio(formData: FormData): string {
 
     bio += "Extracurricular Activities:\n"
     bio += formData.extracurriculars ? formData.extracurriculars + "\n\n" : "Not specified\n\n"
+
+    // Add new field
+    if (formData.careerGoals) {
+      bio += "Early Career Goals:\n"
+      bio += formData.careerGoals + "\n\n"
+    }
+
+    // Add mentorship interest if available
+    if (formData.mentorshipInterest) {
+      bio += "Mentorship Interest:\n"
+      bio += formData.mentorshipInterest + "\n\n"
+    }
   }
 
   if (formData.ageGroup === "college") {
@@ -50,6 +62,18 @@ function constructUserBio(formData: FormData): string {
 
     bio += "Internships/Work Experience:\n"
     bio += formData.internships ? formData.internships + "\n\n" : "Not specified\n\n"
+
+    // Add new field
+    if (formData.academicInterests) {
+      bio += "Specific Academic Interests:\n"
+      bio += formData.academicInterests + "\n\n"
+    }
+
+    // Add mentorship interest if available
+    if (formData.mentorshipInterest) {
+      bio += "Mentorship Interest:\n"
+      bio += formData.mentorshipInterest + "\n\n"
+    }
   }
 
   if (["earlyCareer", "midCareer", "lateCareer"].includes(formData.ageGroup)) {
@@ -61,6 +85,35 @@ function constructUserBio(formData: FormData): string {
 
     bio += "Certifications/Specialized Training:\n"
     bio += formData.certifications ? formData.certifications + "\n\n" : "Not specified\n\n"
+
+    // Add career-specific fields
+    if (formData.ageGroup === "earlyCareer" && formData.careerAspirations) {
+      bio += "Career Aspirations (5-year):\n"
+      bio += formData.careerAspirations + "\n\n"
+    }
+
+    if (formData.ageGroup === "midCareer" && formData.careerChallenges) {
+      bio += "Current Career Challenges:\n"
+      bio += formData.careerChallenges + "\n\n"
+    }
+
+    if (formData.ageGroup === "lateCareer") {
+      if (formData.futureGoals) {
+        bio += "Future Career Goals:\n"
+        bio += formData.futureGoals + "\n\n"
+      }
+
+      if (formData.legacyInterests) {
+        bio += "Legacy Interests:\n"
+        bio += formData.legacyInterests + "\n\n"
+      }
+    }
+
+    // Add work-life balance preference if available
+    if (formData.workLifeBalance) {
+      bio += "Work-Life Balance Importance:\n"
+      bio += formData.workLifeBalance + "\n\n"
+    }
   }
 
   if (formData.ageGroup === "careerChange") {
@@ -72,6 +125,17 @@ function constructUserBio(formData: FormData): string {
 
     bio += "Desired Work Environment:\n"
     bio += formData.desiredWorkEnvironment ? formData.desiredWorkEnvironment + "\n\n" : "Not specified\n\n"
+
+    // Add new fields
+    if (formData.newFieldInterests) {
+      bio += "New Fields of Interest:\n"
+      bio += formData.newFieldInterests + "\n\n"
+    }
+
+    if (formData.retrainingWillingness) {
+      bio += "Willingness to Retrain:\n"
+      bio += formData.retrainingWillingness + "\n\n"
+    }
   }
 
   return bio
@@ -121,28 +185,29 @@ export async function POST(req: Request) {
     const prompt = `As a career counselor AI, analyze the following personal profile to provide comprehensive and detailed career guidance:
 
 IMPORTANT REQUIREMENTS:
-- Suggest EXACTLY 5 unique and distinct career paths that match the profile
+- Suggest EXACTLY 6 unique and distinct career paths that match the profile
 - Each career must be specific (not general categories)
 - Each career must have a unique match percentage between 70-98%
-- Use clear, simple language without special characters or formatting
+- Provide highly detailed and personalized explanations for each career
+- For each career, provide unique and specific next steps tailored to that profession
 - If a project/portfolio URL is provided, analyze it for additional insights
 - Consider the person's age group and life stage
-- Provide practical, actionable next steps
+- Provide practical, actionable next steps that are specific to each career path
 
 For each career suggestion, include:
 1. Title and match percentage
-2. Skills Alignment: Current relevant skills
-3. Growth Potential: Industry outlook and opportunities
-4. Work-Life Balance: Schedule and environment fit
-5. Required Skills: Skills to develop
-6. Salary Range: Expected compensation
-7. Career Progression: Clear 5-10 year path
+2. Skills Alignment: Current relevant skills and how they specifically apply to this career (be detailed)
+3. Growth Potential: Industry outlook, emerging opportunities, and future trends in this specific field
+4. Work-Life Balance: Detailed description of typical schedule, environment, and lifestyle considerations
+5. Required Skills: Comprehensive list of skills to develop with specific recommendations for courses, certifications, or experiences
+6. Salary Range: Expected compensation with progression details at different career stages
+7. Career Progression: Detailed 5-10 year path with specific role transitions and milestones
 
 Personal Profile:
 ${userBio}
 
 Format the response as clear text without special characters or markdown formatting.
-Keep descriptions concise and actionable.`
+Make each career description unique, detailed, and actionable with specific next steps.`
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -167,8 +232,8 @@ Keep descriptions concise and actionable.`
           .map((p) => p.replace(/^\s*-\s*/, "").trim())
       : []
 
-    // Ensure we have exactly 5 professions
-    if (professions.length < 5) {
+    // Ensure we have exactly 6 professions
+    if (professions.length < 6) {
       const genericProfessions = [
         "Software Developer",
         "Data Analyst",
@@ -177,9 +242,12 @@ Keep descriptions concise and actionable.`
         "Financial Advisor",
         "Business Consultant",
         "UX Designer",
+        "Product Manager",
+        "Digital Content Creator",
+        "Cybersecurity Specialist",
       ]
 
-      while (professions.length < 5) {
+      while (professions.length < 6) {
         const genericProfession = genericProfessions[professions.length % genericProfessions.length]
         if (!professions.includes(genericProfession)) {
           professions.push(genericProfession)
@@ -207,7 +275,7 @@ Keep descriptions concise and actionable.`
                 .trim()
             : section.trim()
 
-        // Simplify formatting
+        // Simplify formatting but preserve structure
         description = description
           .replace(/[•\-*]/g, "") // Remove bullets and special characters
           .replace(/\n+/g, "\n") // Normalize line breaks
@@ -223,14 +291,25 @@ Keep descriptions concise and actionable.`
         }
       })
 
-    // Ensure we have exactly 5 details
-    if (details.length < 5) {
-      for (let i = details.length; i < 5; i++) {
+    // Ensure we have exactly 6 details
+    if (details.length < 6) {
+      for (let i = details.length; i < 6; i++) {
         if (professions[i]) {
           details.push({
             title: professions[i],
             match: 70 + i * 5,
-            description: `This career path aligns with your skills and interests. It offers good growth potential and work-life balance. Consider developing additional skills in this area to enhance your career prospects.`,
+            description: `
+Skills Alignment: This career path aligns with your ${formData.skills ? formData.skills.split(",")[0] : "technical"} skills and ${formData.interests ? formData.interests.split(",")[0] : "interests"}.
+
+Growth Potential: This field is experiencing significant growth with emerging opportunities in specialized areas.
+
+Work-Life Balance: Typically offers a flexible schedule with options for remote work and project-based assignments.
+
+Required Skills: Consider developing expertise in industry-specific tools and methodologies through specialized courses.
+
+Salary Range: Entry-level positions typically start at $60,000-$75,000, with senior roles reaching $120,000-$150,000 depending on specialization and location.
+
+Career Progression: Begin in an associate role, advance to specialist within 2-3 years, then to senior or lead positions by year 5, with management opportunities by year 7-10.`,
           })
         }
       }
@@ -238,8 +317,8 @@ Keep descriptions concise and actionable.`
 
     const parsedResult = {
       iq,
-      professions: professions.slice(0, 5), // Ensure exactly 5 professions
-      details: details.slice(0, 5), // Ensure exactly 5 details
+      professions: professions.slice(0, 6), // Ensure exactly 6 professions
+      details: details.slice(0, 6), // Ensure exactly 6 details
     }
 
     return NextResponse.json(parsedResult)

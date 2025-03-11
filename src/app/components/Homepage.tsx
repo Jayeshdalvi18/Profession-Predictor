@@ -120,7 +120,7 @@ export default function Home() {
     const fetchPredictionsCount = async () => {
       if (status === "unauthenticated") {
         try {
-          const response = await fetch("/api/predictions-count")
+          const response = await fetch("/api/guest/predictions-count")
           if (response.ok) {
             const data = await response.json()
             setPredictionsCount(data.count)
@@ -795,7 +795,7 @@ export default function Home() {
                         </CardHeader>
                         <CardContent>
                           <ul className="space-y-2">
-                            {result.professions?.map((profession, index) => (
+                            {result.professions?.slice(0, 6).map((profession, index) => (
                               <li key={index} className="flex items-center gap-2">
                                 <Badge variant="secondary">{index + 1}</Badge>
                                 {profession}

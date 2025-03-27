@@ -782,7 +782,7 @@ export default function Home() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({ error: "Failed to parse error response" }))
         if (errorData.limitReached) {
           toast({
             title: "Prediction Limit Reached",
@@ -795,9 +795,24 @@ export default function Home() {
         throw new Error(errorData.error || "Failed to get career suggestions")
       }
 
-      const data = (await response.json()) as CareerResult
-      if (!data.iq || !data.professions || !data.details) {
+      let data: CareerResult
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        console.error("JSON parsing error:", jsonError)
+        throw new Error("Failed to parse response data. Please try again.")
+      }
+
+      if (!data || !data.professions || !data.details) {
         throw new Error("Invalid response format")
+      }
+
+      // Store results in localStorage for the detailed pages to access
+      try {
+        localStorage.setItem("careerResults", JSON.stringify(data))
+      } catch (storageError) {
+        console.error("Error storing results:", storageError)
+        // Continue even if storage fails
       }
 
       setResult(data)

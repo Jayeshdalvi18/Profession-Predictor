@@ -142,6 +142,7 @@ function constructUserBio(formData: FormData): string {
 }
 
 // Update the POST function to better handle the AI response and ensure proper JSON formatting
+// and track previously suggested professions and IQ levels
 export async function POST(req: Request) {
   try {
     const formData = (await req.json()) as FormData
@@ -149,6 +150,10 @@ export async function POST(req: Request) {
     // Check guest user prediction limit
     const cookieStore = await cookies()
     const guestId = cookieStore.get("guestId")?.value
+
+    // Track previous professions and IQ levels for this user
+    let previousProfessions: string[] = []
+    let previousIQs: number[] = []
 
     if (guestId) {
       await dbConnect()
@@ -164,8 +169,11 @@ export async function POST(req: Request) {
         )
       }
 
-      // Increment prediction count for guest users
+      // Get previous professions and IQs if they exist
       if (guest) {
+        previousProfessions = guest.previousProfessions || []
+        previousIQs = guest.previousIQs || []
+
         guest.predictionsCount += 1
         guest.lastActive = new Date()
         await guest.save()
@@ -174,6 +182,8 @@ export async function POST(req: Request) {
         await GuestModel.create({
           guestId,
           predictionsCount: 1,
+          previousProfessions: [],
+          previousIQs: [],
           createdAt: new Date(),
           lastActive: new Date(),
         })
@@ -195,6 +205,8 @@ IMPORTANT REQUIREMENTS:
 - Consider the person's age group and life stage
 - Provide practical, actionable next steps that are specific to each career path
 - Include an estimated IQ score between 110-140 based on the complexity of skills, education, and interests
+${previousProfessions.length > 0 ? `- DO NOT suggest any of these professions that were previously recommended: ${previousProfessions.join(", ")}` : ""}
+${previousIQs.length > 0 ? `- DO NOT suggest an IQ score similar to these previous scores (vary by at least 5 points): ${previousIQs.join(", ")}` : ""}
 
 For each career suggestion, include:
 1. Title and match percentage
@@ -258,17 +270,32 @@ Make each career description unique, detailed, and actionable with specific next
       "Product Manager",
       "Digital Content Creator",
       "Cybersecurity Specialist",
+      "Technical Writer",
+      "Research Scientist",
+      "Healthcare Administrator",
+      "Environmental Consultant",
+      "Logistics Coordinator",
+      "Human Resources Specialist",
+      "Educational Technologist",
+      "Biomedical Engineer",
+      "Renewable Energy Analyst",
+      "Blockchain Developer",
     ]
 
-    // If we couldn't extract any professions, use all generics
+    // Filter out previously suggested professions from generic options
+    const availableGenericProfessions = genericProfessions.filter(
+      (profession) => !previousProfessions.includes(profession),
+    )
+
+    // If we couldn't extract any professions, use generics that haven't been suggested before
     if (professions.length === 0) {
-      professions = genericProfessions.slice(0, 6)
+      professions = availableGenericProfessions.slice(0, 6)
     }
     // If we have some but not enough, add generics to reach 6
     else
       while (professions.length < 6) {
-        const genericProfession = genericProfessions[professions.length % genericProfessions.length]
-        if (!professions.includes(genericProfession)) {
+        const genericProfession = availableGenericProfessions[professions.length % availableGenericProfessions.length]
+        if (!professions.includes(genericProfession) && !previousProfessions.includes(genericProfession)) {
           professions.push(genericProfession)
         }
       }
@@ -379,6 +406,24 @@ Career Progression: Begin in an associate role, advance to specialist within 2-3
       iq,
       professions: professions.slice(0, 6), // Ensure exactly 6 professions
       details: details, // Ensure exactly 6 details
+    }
+
+    // Update the guest record with the new professions and IQ
+    if (guestId) {
+      await dbConnect()
+      const guest = await GuestModel.findOne({ guestId })
+
+      if (guest) {
+        // Keep only the last 3 sets of professions and IQs (to avoid repeating in the next 3 requests)
+        const updatedProfessions = [...previousProfessions, ...professions]
+        const updatedIQs = [...previousIQs, iq]
+
+        // Limit to last 18 professions (3 sets of 6) and 3 IQs
+        guest.previousProfessions = updatedProfessions.slice(-18)
+        guest.previousIQs = updatedIQs.slice(-3)
+
+        await guest.save()
+      }
     }
 
     return NextResponse.json(parsedResult)
